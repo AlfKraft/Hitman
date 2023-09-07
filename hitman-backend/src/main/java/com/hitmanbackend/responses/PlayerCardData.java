@@ -2,13 +2,16 @@ package com.hitmanbackend.responses;
 
 public class PlayerCardData {
 
+    private String name;
+
     private String eliminationCode;
 
-    private Long Score;
+    private Long score;
 
-    public PlayerCardData(String eliminationCode, Long score) {
+    public PlayerCardData(String name, String eliminationCode, Long score) {
+        this.name = name;
         this.eliminationCode = eliminationCode;
-        Score = score;
+        this.score = score;
     }
 
     public PlayerCardData() {
@@ -23,10 +26,18 @@ public class PlayerCardData {
     }
 
     public Long getScore() {
-        return Score;
+        return this.score;
     }
 
     public void setScore(Long score) {
-        Score = score;
+        this.score = score;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

@@ -166,12 +166,13 @@ public class HitmanService {
             Optional<EliminationEntity> eliminationData = eliminationRepository.findByTargetId(player.get().getId());
             Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
             if (eliminationData.isPresent() && score.isPresent()){
+                playerCardData.setName(player.get().getName());
                 playerCardData.setEliminationCode(eliminationData.get().getEliminationCode());
                 playerCardData.setScore(score.get().getScore());
                 return playerCardData;
             }
             if (score.isPresent()){
-                return new PlayerCardData("", score.get().getScore());
+                return new PlayerCardData(player.get().getName(), "", score.get().getScore());
             }
         }
         throw new Exception("Couldn't retrieve player's data.");

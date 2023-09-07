@@ -1,7 +1,9 @@
 package com.hitmanbackend.service;
 
+import com.hitmanbackend.dto.Leader;
 import com.hitmanbackend.dto.User;
 import com.hitmanbackend.entities.EliminationEntity;
+import com.hitmanbackend.entities.ScoreEntity;
 import com.hitmanbackend.entities.TestAccountEntity;
 import com.hitmanbackend.repositories.EliminationRepository;
 import com.hitmanbackend.repositories.ScoreRepository;
@@ -83,5 +85,17 @@ public class UserService {
             return;
         }
         throw new Exception("Couldn't find player form database");
+    }
+
+    public List<Leader> getTopPlayers(){
+        List<ScoreEntity> scores = scoreRepository.findTop5ByOrderByScoreDesc();
+        List<Leader> leaders = new ArrayList<>();
+        Long rank = 1L;
+        for (ScoreEntity score:
+             scores) {
+            leaders.add(new Leader(rank, score.getPlayer().getName(),score.getScore()));
+            rank++;
+        }
+        return leaders;
     }
 }

@@ -1,8 +1,13 @@
 <template>
   <v-card>
+    <v-img
+      src="@/assets/mission.jpg"
+      height="200px"
+      cover
+    ></v-img>
     <v-card-title>Welcome agent {{props.name}} !</v-card-title>
-    <v-card-text> Your elimination code: {{props.eliminationCode}} </v-card-text>
-    <v-card-text> Score: {{props.score}} </v-card-text>
+    <v-card-title> Your elimination code: {{props.eliminationCode}} </v-card-title>
+    <v-card-title> Points: {{props.score}} </v-card-title>
   </v-card>
 </template>
 

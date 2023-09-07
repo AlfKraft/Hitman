@@ -41,4 +41,8 @@ public class ScoreEntity {
     public void setScore(Long score) {
         this.score = score;
     }
+
+    public TestAccountEntity getPlayer() {
+        return player;
+    }
 }
