@@ -24,6 +24,9 @@ app.component('Datepicker', Datepicker)
 
 app.provide('axios', app.config.globalProperties.axios)
 axios.defaults.baseURL = '/hitman-backend';
+if (localStorage.getItem("user")){
+  axios.defaults.headers.common['Authorization'] = 'Bearer ' + JSON.parse(localStorage.getItem("user")).token;
+}
 registerPlugins(app)
 
 app.mount('#app')

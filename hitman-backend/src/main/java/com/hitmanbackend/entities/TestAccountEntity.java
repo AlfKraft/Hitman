@@ -29,6 +29,10 @@ public class TestAccountEntity {
     private EliminationEntity targetEntity;
 
 
+    @OneToOne(mappedBy = "player")
+    private ScoreEntity scoreEntity;
+
+
     public Boolean getEliminated() {
         return eliminated;
     }
@@ -95,5 +99,13 @@ public class TestAccountEntity {
 
     public void setAboutInfo(String aboutInfo) {
         this.aboutInfo = aboutInfo;
+    }
+
+    public ScoreEntity getScoreEntity() {
+        return scoreEntity;
+    }
+
+    public void setScoreEntity(ScoreEntity scoreEntity) {
+        this.scoreEntity = scoreEntity;
     }
 }

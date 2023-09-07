@@ -1,7 +1,7 @@
 <template>
   <v-container v-if="!loading">
     <v-alert class="bg-transparent" v-if="errorMessage">{{errorMessage}}</v-alert>
-    <v-form v-if="!registered">
+    <v-form>
       <v-text-field v-model="regData.firstName" :error-messages="errorFirstName()" @input="firstNameChange" label="First name"></v-text-field>
       <v-text-field v-model="regData.lastName" :error-messages="errorLastName()" @input="lastNameChange" label="Last Name"></v-text-field>
       <v-text-field v-model="regData.aboutInfo" :error-messages="errorAboutInfo()" @input="aboutInfoChange" label="Tell us about yourself"></v-text-field>
@@ -11,14 +11,8 @@
       <v-btn @click="register">Register</v-btn>
     </v-form>
   </v-container>
-  <v-container v-else-if="loading">
-    <Loading/>
-  </v-container>
   <v-container v-else>
-    <v-card>
-      <v-card-text>Registered</v-card-text>
-      <v-btn to="/login">Log in</v-btn>
-    </v-card>
+    <Loading/>
   </v-container>
 </template>
 <script setup>
@@ -34,7 +28,6 @@ const axios = inject('axios');
 const registered = ref(false);
 const errorMessage = ref(null)
 const loading = ref(false)
-
 const passwordValidation = (value) => {
   let number = false;
   for (let i = 1; i < 10; i++) {
@@ -69,15 +62,15 @@ const rules = computed(()=> {
 });
 
 
-
 const $v = useVuelidate(rules, regData)
+
 async function register(){
   const valid = await $v.value.$validate()
   if (valid){
     loading.value = true
     await axios.post("/register", regData)
-      .then(response => {
-          registered.value = true
+      .then(() => {
+          errorMessage.value = "You are registered. Proceed to the log in tab."
       })
       .catch(error => {
         errorMessage.value = error.response.data.message

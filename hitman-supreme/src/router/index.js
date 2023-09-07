@@ -16,6 +16,9 @@ const routes = [
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
         component: () => import(/* webpackChunkName: "home" */ '@/views/Home.vue'),
+        meta: {
+          public: true
+        }
       },
       {
         path: '/about',
@@ -24,6 +27,9 @@ const routes = [
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
         component: () => import(/* webpackChunkName: "home" */ '@/views/About.vue'),
+        meta: {
+          public: true
+        }
       },
       {
         path: '/register',
@@ -32,6 +38,9 @@ const routes = [
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
         component: () => import(/* webpackChunkName: "home" */ '@/views/RegistrationView.vue'),
+        meta: {
+          public: true
+        }
       },
       {
         path: '/login',
@@ -40,6 +49,9 @@ const routes = [
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
         component: () => import(/* webpackChunkName: "home" */ '@/views/Login'),
+        meta: {
+          public: true
+        }
       },
       {
         path: '/missions',
@@ -129,7 +141,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
-/*
+
 router.beforeEach(async (to) => {
   // redirect to login page if not logged in and trying to access a restricted page
   const authenticate = useAuthStore();
@@ -147,8 +159,16 @@ router.beforeEach(async (to) => {
       }
     }
   }
+  if(to.meta.public && authenticate.user){
+    if (authenticate.user.role === 'ADMIN'){
+      return { name: 'Admin' }
+    }
+    else {
+      return { name: 'User' }
+    }
+  }
 })
 
- */
+
 
 export default router

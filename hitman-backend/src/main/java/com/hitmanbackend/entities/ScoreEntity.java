@@ -16,6 +16,7 @@ public class ScoreEntity {
 
     private Long score;
 
+
     public ScoreEntity() {
     }
 
@@ -31,14 +32,6 @@ public class ScoreEntity {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public TestAccountEntity getPlayer() {
-        return player;
-    }
-
-    public void setPlayer(TestAccountEntity player) {
-        this.player = player;
     }
 
     public Long getScore() {

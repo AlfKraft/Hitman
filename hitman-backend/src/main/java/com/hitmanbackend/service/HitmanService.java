@@ -1,5 +1,6 @@
 package com.hitmanbackend.service;
 
+import com.hitmanbackend.controllers.UserController;
 import com.hitmanbackend.entities.EliminationEntity;
 import com.hitmanbackend.entities.ScoreEntity;
 import com.hitmanbackend.entities.TestAccountEntity;
@@ -8,6 +9,8 @@ import com.hitmanbackend.repositories.ScoreRepository;
 import com.hitmanbackend.repositories.TestAccountRepository;
 import com.hitmanbackend.responses.PlayerCardData;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +28,12 @@ public class HitmanService {
     @Autowired
     TestAccountRepository testAccountRepository;
     @Autowired
-    EliminationCode eliminationCode;
+    RandomCode eliminationCode;
 
     @Autowired
     ScoreRepository scoreRepository;
+
+    Logger logger = LoggerFactory.getLogger(HitmanService.class);
 
 
     public void createANewGameCycle(){
@@ -108,11 +113,11 @@ public class HitmanService {
                     if (nextEliminationData.isPresent()) {
                         Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
                         if(score.isPresent()){
-                            score.get().setScore(score.get().getScore() + 50);
+                            score.get().setScore(score.get().getScore() + 100);
                             scoreRepository.save(score.get());
                         }
                         else {
-                            scoreRepository.save(new ScoreEntity(player.get(), 50L));
+                            scoreRepository.save(new ScoreEntity(player.get(), 100L));
                         }
                         TestAccountEntity eliminated = eliminationEntity.get().getTarget();
                         eliminated.setEliminated(true);
@@ -124,10 +129,25 @@ public class HitmanService {
                         return new Target(eliminationEntity.get().getTarget().getName(), eliminationEntity.get()
                                 .getTarget().getAboutInfo());
                     }
+                    else {
+                        logger.error("Target %s doesn't have a next target assigned.".formatted(nextEliminationData.get().getPlayer().getUsername()));
+                    }
+
+                }
+                else {
+                    logger.error("Elimination codes didn't match: Input: %s and Database: %s".formatted(eliminationCode, eliminationEntity.get().getEliminationCode()));
                 }
             }
+            else {
+                logger.error("Couldn't find %s's data in active game database".formatted(username));
+            }
         }
-        throw new Exception("Elimination failed");
+        else {
+            logger.error("%s was not found in the database".formatted(username));
+        }
+
+        throw new Exception("Elimination failed!");
+
     }
 
     public void nullifyAllScores(){
@@ -149,6 +169,9 @@ public class HitmanService {
                 playerCardData.setEliminationCode(eliminationData.get().getEliminationCode());
                 playerCardData.setScore(score.get().getScore());
                 return playerCardData;
+            }
+            if (score.isPresent()){
+                return new PlayerCardData("", score.get().getScore());
             }
         }
         throw new Exception("Couldn't retrieve player's data.");

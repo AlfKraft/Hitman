@@ -14,11 +14,15 @@ export const userStore = defineStore({
     getMissions(){
       return axios.get('/getMissions')
     },
-    eliminateTarget(eliminateData){
-      return axios.get('/eliminateTarget', eliminateData)
+    eliminateTarget(eliminationData){
+      return axios.post('/eliminateTarget', eliminationData)
     },
-    getMyInfo(){
+    getMyStats(){
       return axios.get('/getMyStats')
     },
+    getAllPlayers(){
+      return axios.get('/getPlayers')
+    }
+
   }
 });

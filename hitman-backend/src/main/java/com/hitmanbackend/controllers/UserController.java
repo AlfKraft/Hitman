@@ -7,6 +7,8 @@ import com.hitmanbackend.security.JwtTokenProvider;
 import com.hitmanbackend.service.HitmanService;
 import com.hitmanbackend.service.Target;
 import io.jsonwebtoken.Claims;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,13 +22,13 @@ public class UserController {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @GetMapping("hitman-backend/getMyTarget")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getTargetInfo(@RequestHeader("Authorization") String token){
         Claims claims = jwtTokenProvider.parseToken(token.substring(7));
         String refreshToken = jwtTokenProvider.generateJwt(claims.getSubject(), claims.get("role").toString());
-
         try{
             Target target = hitmanService.getPlayerTarget(claims.getSubject());
             return ResponseEntity.ok(target);
@@ -38,10 +40,14 @@ public class UserController {
     @PostMapping("hitman-backend/eliminateTarget")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> elimination(@RequestHeader("Authorization") String token, @RequestBody EliminationRequest request){
+        System.out.println(request);
+        logger.info("This should be elimination code %s".formatted(request.getEliminationCode()));
         Claims claims = jwtTokenProvider.parseToken(token.substring(7));
         String refreshToken = jwtTokenProvider.generateJwt(claims.getSubject(), claims.get("role").toString());
+        logger.info("%s elimination started".formatted(claims.getSubject()));
         try{
             Target target = hitmanService.eliminateTarget(claims.getSubject(), request.getEliminationCode());
+            logger.info("%s's elimination was successful".formatted(claims.getSubject()));
             return ResponseEntity.ok(target);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorMessage(e.getMessage()));

@@ -10,6 +10,7 @@ public interface TestAccountRepository extends JpaRepository<TestAccountEntity, 
 
     Optional<TestAccountEntity> findAccountByUsername(String username);
     Boolean existsByUsername(String username);
+    List<TestAccountEntity> findByRoleEquals(String role);
 
     List<TestAccountEntity> findByRoleEqualsAndEliminatedFalse(String role);
     List<TestAccountEntity> findAllByRoleEquals(String role);

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import java.util.Random;
 
 @Service
-public class EliminationCode {
+public class RandomCode {
 
     public String randomAlphanumericString(int length) {
         String alphanumericCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuv";
