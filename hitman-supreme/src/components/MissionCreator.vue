@@ -10,7 +10,10 @@
         <v-text-field v-model="missionData.missionLocation" label="Add mission location"></v-text-field>
         <v-text-field v-model="missionData.startDateTime" type="datetime-local" label="Start time"></v-text-field>
         <v-text-field v-model="missionData.endDateTime" type="datetime-local" label="End time"></v-text-field>
-        <v-text-field v-model="missionData.points" label="Points worth"></v-text-field>
+        <v-text-field v-if="!missionData.forEliminated" v-model="missionData.points" label="Points worth"></v-text-field>
+        <v-text-field v-model="missionData.missionCode" label="Mission completion code"></v-text-field>
+        <v-switch color="white" v-model="missionData.forEliminated" label="For eliminated players"></v-switch>
+        <v-text-field v-model="missionData.missionCompletionCount" label="Mission completion count"></v-text-field>
         <v-btn @click="createMission">Create Mission</v-btn>
       </v-form>
       <Loading v-else/>
@@ -31,14 +34,18 @@ const missionData = reactive({
   missionLocation: '',
   startDateTime: '',
   endDateTime: '',
-  points: ''
+  points: '',
+  missionCode: '',
+  forEliminated: false,
+  missionCompletionCount: ''
 });
 
 
 async function createMission(){
   loading.value = true
-  await store.createNewMission(missionData).then(
+  await store.createNewMission(missionData).then(response =>{
     message.value = "Mission created successfully!"
+  }
   ).catch(
     err =>
     {

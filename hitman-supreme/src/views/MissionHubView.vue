@@ -1,8 +1,10 @@
 <template>
   <v-container>
-    <v-row class="d-flex justify-center">
-      <v-col><mission-control class="bg-red-darken-4 rounded h-100"/></v-col>
-      <v-col><MissionCreator class="bg-red-darken-4 rounded" /></v-col>
+    <v-row>
+      <mission-control class="rounded h-100"/>
+    </v-row>
+    <v-row>
+      <MissionCreator class="bg-red-darken-4 rounded" />
     </v-row>
   </v-container>
 </template>

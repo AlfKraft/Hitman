@@ -2,6 +2,10 @@ package com.hitmanbackend.entities;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @Entity
 @Table(name = "test_accounts")
 public class TestAccountEntity {
@@ -28,10 +32,11 @@ public class TestAccountEntity {
     @OneToOne(mappedBy = "target")
     private EliminationEntity targetEntity;
 
-
     @OneToOne(mappedBy = "player")
     private ScoreEntity scoreEntity;
 
+    @OneToMany(mappedBy = "player")
+    private Set<MissionAssignmentEntity> missions = new HashSet<>();
 
     public Boolean getEliminated() {
         return eliminated;
@@ -107,5 +112,17 @@ public class TestAccountEntity {
 
     public void setScoreEntity(ScoreEntity scoreEntity) {
         this.scoreEntity = scoreEntity;
+    }
+
+    public EliminationEntity getPlayerEntity() {
+        return playerEntity;
+    }
+
+    public EliminationEntity getTargetEntity() {
+        return targetEntity;
+    }
+
+    public Set<MissionAssignmentEntity> getMissions() {
+        return missions;
     }
 }

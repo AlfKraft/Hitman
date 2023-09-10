@@ -1,11 +1,15 @@
 package com.hitmanbackend.controllers;
 
 import com.hitmanbackend.dto.Leader;
+import com.hitmanbackend.requests.CompleteMissionRequest;
 import com.hitmanbackend.requests.EliminationRequest;
 import com.hitmanbackend.responses.ErrorMessage;
+import com.hitmanbackend.responses.MessageResponse;
+import com.hitmanbackend.responses.MissionsResponse;
 import com.hitmanbackend.responses.PlayerCardData;
 import com.hitmanbackend.security.JwtTokenProvider;
 import com.hitmanbackend.service.HitmanService;
+import com.hitmanbackend.service.MissionService;
 import com.hitmanbackend.service.Target;
 import com.hitmanbackend.service.UserService;
 import io.jsonwebtoken.Claims;
@@ -27,6 +31,9 @@ public class UserController {
     private JwtTokenProvider jwtTokenProvider;
     @Autowired
     private UserService userService;
+    @Autowired
+    private MissionService missionService;
+
 
     Logger logger = LoggerFactory.getLogger(UserController.class);
 
@@ -83,4 +90,31 @@ public class UserController {
             return ResponseEntity.badRequest().body(new ErrorMessage(e.getMessage()));
         }
     }
+
+    @GetMapping("hitman-backend/myMissions")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> getMyMissions(@RequestHeader("Authorization") String token){
+        try {
+            Claims claims = jwtTokenProvider.parseToken(token.substring(7));
+            MissionsResponse missions = missionService.getMyMissions(claims.getSubject());
+            return ResponseEntity.ok(missions);
+        }
+        catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorMessage(e.getMessage()));
+        }
+    }
+
+    @PostMapping("hitman-backend/completeMission")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> completeMission(@RequestHeader("Authorization") String token, @RequestBody CompleteMissionRequest request){
+        try {
+            Claims claims = jwtTokenProvider.parseToken(token.substring(7));
+            missionService.completeMission(claims.getSubject(), request.getMissionId(), request.getMissionCode());
+            return ResponseEntity.ok(new MessageResponse("Nice work! Mission completed!"));
+        }
+        catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorMessage(e.getMessage()));
+        }
+    }
+
 }

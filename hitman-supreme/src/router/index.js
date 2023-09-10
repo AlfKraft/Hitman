@@ -48,7 +48,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/Login'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/Login.vue'),
         meta: {
           public: true
         }
@@ -59,7 +59,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/Missions'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/Missions.vue'),
         meta:{
           requiresAuth: true,
           role: "USER"
@@ -71,7 +71,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/TargetView'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/TargetView.vue'),
         meta:{
           requiresAuth: true,
           role: "USER"
@@ -83,7 +83,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/MissionHubView'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/MissionHubView.vue'),
         meta:{
           requiresAuth: true,
           role: "ADMIN"
@@ -95,7 +95,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/UserHubView'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/UserHubView.vue'),
         meta:{
           requiresAuth: true,
           role: "ADMIN"
@@ -107,7 +107,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/AdminView'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/AdminView.vue'),
         meta:{
           requiresAuth: true,
           role: "ADMIN"
@@ -119,7 +119,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/UserView'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/UserView.vue'),
         meta:{
           requiresAuth: true,
           role: "USER"
@@ -131,7 +131,7 @@ const routes = [
         // route level code-splitting
         // this generates a separate chunk (about.[hash].js) for this route
         // which is lazy-loaded when the route is visited.
-        component: () => import(/* webpackChunkName: "home" */ '@/views/NotFound'),
+        component: () => import(/* webpackChunkName: "home" */ '@/views/NotFound.vue'),
       },
     ],
   },
@@ -142,32 +142,43 @@ const router = createRouter({
   routes,
 })
 
+/*
 router.beforeEach(async (to) => {
   // redirect to login page if not logged in and trying to access a restricted page
+  NProgress.start()
   const authenticate = useAuthStore();
   if (to.meta.requiresAuth){
     await authenticate.verifyAccount()
     if(!authenticate.user){
+      NProgress.done()
       return { name: 'Login' }
     }
     if (authenticate.user.role !== to.meta.role){
       if (authenticate.user.role === 'ADMIN'){
+        NProgress.done()
         return { name: 'Admin' }
       }
       else {
+        NProgress.done()
         return { name: 'User' }
       }
     }
   }
+
   if(to.meta.public && authenticate.user){
     if (authenticate.user.role === 'ADMIN'){
+      NProgress.done()
       return { name: 'Admin' }
     }
     else {
+      NProgress.done()
       return { name: 'User' }
     }
   }
+  NProgress.done()
 })
+
+ */
 
 
 

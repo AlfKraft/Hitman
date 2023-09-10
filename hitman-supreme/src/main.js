@@ -12,6 +12,7 @@ import { createApp } from 'vue'
 import axios from "axios";
 import VueAxios from "vue-axios";
 import '@vuepic/vue-datepicker/dist/main.css'
+import 'nprogress/nprogress.css'
 // Plugins
 import { registerPlugins } from '@/plugins'
 import Datepicker from '@vuepic/vue-datepicker';

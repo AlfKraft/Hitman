@@ -8,18 +8,22 @@ public class MissionCreationRequest {
     private String startDateTime;
     private String endDateTime;
     private String missionLocation;
-
+    private String missionCode;
     private String points;
+    private Boolean forEliminated;
+    private Long missionCompletionCount;
 
-    public MissionCreationRequest(Long id, String missionName, String missionInfo, String startDateTime, String endDateTime
-            , String missionLocation, String points) {
-        this.id = id;
+    public MissionCreationRequest(String missionName, String missionInfo, String startDateTime, String endDateTime
+            , String missionLocation, String missionCode, String points, Boolean forEliminated, Long missionCompletionCount) {
         this.missionName = missionName;
         this.missionInfo = missionInfo;
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
         this.missionLocation = missionLocation;
+        this.missionCode = missionCode;
         this.points = points;
+        this.forEliminated = forEliminated;
+        this.missionCompletionCount= missionCompletionCount;
     }
 
     public MissionCreationRequest() {
@@ -73,11 +77,35 @@ public class MissionCreationRequest {
         this.missionLocation = missionLocation;
     }
 
+    public String getMissionCode() {
+        return missionCode;
+    }
+
+    public void setMissionCode(String missionCode) {
+        this.missionCode = missionCode;
+    }
+
     public String getPoints() {
         return points;
     }
 
     public void setPoints(String points) {
         this.points = points;
+    }
+
+    public Boolean getForEliminated() {
+        return forEliminated;
+    }
+
+    public void setForEliminated(Boolean forEliminated) {
+        this.forEliminated = forEliminated;
+    }
+
+    public Long getMissionCompletionCount() {
+        return missionCompletionCount;
+    }
+
+    public void setMissionCompletionCount(Long missionCompletionCount) {
+        this.missionCompletionCount = missionCompletionCount;
     }
 }

@@ -28,6 +28,24 @@ input {
   padding: 4px 0 0 0;
 }
 
+#nprogress .bar {
+  background: #ffffff !important;
+  height: 5px !important;
+}
+
+#nprogress .spinner-icon {
+  border-top-color: #ffffff !important;
+  border-left-color: #ffffff !important;
+}
+
+#nprogress .spinner {
+  display: block !important;
+  position:  relative !important;
+  top: 21px !important;
+  left: 90px !important;
+}
+
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus select:-webkit-autofill,

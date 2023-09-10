@@ -1,6 +1,7 @@
 package com.hitmanbackend.controllers;
 
 import com.hitmanbackend.dto.User;
+import com.hitmanbackend.entities.MissionEntity;
 import com.hitmanbackend.requests.MissionCreationRequest;
 import com.hitmanbackend.requests.PlayerIdRequest;
 import com.hitmanbackend.responses.ErrorMessage;
@@ -47,7 +48,9 @@ public class AdminController {
         }
     }
 
+
     @GetMapping("hitman-backend/getMissions")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getMissions(){
         try {
             MissionsResponse response = missionService.getAllMissions();
@@ -56,6 +59,10 @@ public class AdminController {
             return ResponseEntity.badRequest().body(new ErrorMessage(exception.getMessage()));
         }
     }
+
+
+
+
 
     @GetMapping("hitman-backend/getPlayers")
     @PreAuthorize("hasRole('ADMIN')")

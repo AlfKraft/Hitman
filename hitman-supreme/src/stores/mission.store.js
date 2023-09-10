@@ -6,24 +6,25 @@ export const missionStore = defineStore({
   id: 'mission',
   state: () => ({
     missions: [],
-    loading: false
+    loading: false,
+    completedMissions: []
   }),
   actions: {
-    async getMissions(){
+    async getMyMissions(){
       this.loading = true;
-       return await axios.get('/getMissions').then(
+       return await axios.get('/myMissions').then(
          response => {
            this.missions = response.data.missions
+           this.completedMissions = response.data.completedMissions
            this.loading = false;
          }
        ).catch(error => {
-         this.missions = []
          this.loading = false;
        })
 
     },
-    createNewMission(missionData){
-      return axios.post('/createNewMission',missionData).then(async () => {
+    async createNewMission(missionData){
+      return await axios.post('/createNewMission',missionData).then(async () => {
         await this.getMissions()
       }
       )
@@ -31,6 +32,20 @@ export const missionStore = defineStore({
 
     shufflePlayers(){
       return axios.get('/codes')
-    }
+    },
+    completeMission(missionCompletionData){
+      return axios.post('/completeMission', missionCompletionData)
+    },
+    async getMissions(){
+      this.loading = true;
+      return await axios.get('/getMissions').then(
+        response => {
+          this.missions = response.data.missions
+          this.loading = false;
+        }
+      ).catch(error => {
+        this.loading = false;
+      })
+  },
   },
 });

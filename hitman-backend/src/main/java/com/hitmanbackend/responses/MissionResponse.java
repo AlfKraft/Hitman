@@ -1,44 +1,31 @@
-package com.hitmanbackend.entities;
+package com.hitmanbackend.responses;
 
-import jakarta.persistence.*;
-
-import java.util.HashSet;
-import java.util.Set;
-
-@Entity
-@Table(name = "missions")
-public class MissionEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class MissionResponse {
     private Long id;
     private String missionName;
     private String missionInfo;
     private String startTime;
     private String endTime;
     private String location;
-    private String missionCode;
     private Long points;
     private Boolean forEliminated;
     private Long missionCompletionCount;
+    private Boolean active;
 
-    @OneToMany(mappedBy = "mission")
-    private Set<MissionAssignmentEntity> missions = new HashSet<>();
-
-    public MissionEntity(String missionName, String missionInfo, String startTime, String endTime, String location
-            , String missionCode, Long points, Boolean forEliminated, Long missionCompletionCount) {
+    public MissionResponse(Long id, String missionName, String missionInfo, String startTime, String endTime, String location, Long points, Boolean forEliminated, Long missionCompletionCount, Boolean active) {
+        this.id = id;
         this.missionName = missionName;
         this.missionInfo = missionInfo;
         this.startTime = startTime;
         this.endTime = endTime;
         this.location = location;
-        this.missionCode = missionCode;
         this.points = points;
         this.forEliminated = forEliminated;
         this.missionCompletionCount = missionCompletionCount;
+        this.active = active;
     }
 
-    public MissionEntity() {
+    public MissionResponse() {
     }
 
     public Long getId() {
@@ -89,14 +76,6 @@ public class MissionEntity {
         this.location = location;
     }
 
-    public String getMissionCode() {
-        return missionCode;
-    }
-
-    public void setMissionCode(String missionCode) {
-        this.missionCode = missionCode;
-    }
-
     public Long getPoints() {
         return points;
     }
@@ -121,11 +100,11 @@ public class MissionEntity {
         this.missionCompletionCount = missionCompletionCount;
     }
 
-    public Set<MissionAssignmentEntity> getMissions() {
-        return missions;
+    public Boolean getActive() {
+        return active;
     }
 
-    public void setMissions(Set<MissionAssignmentEntity> missions) {
-        this.missions = missions;
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

@@ -15,6 +15,8 @@ public interface TestAccountRepository extends JpaRepository<TestAccountEntity, 
     List<TestAccountEntity> findByRoleEqualsAndEliminatedFalse(String role);
     List<TestAccountEntity> findAllByRoleEquals(String role);
 
+    List<TestAccountEntity> findByEliminated(Boolean eliminated);
+
 
 
 }

@@ -2,12 +2,8 @@ package com.hitmanbackend.service;
 
 import com.hitmanbackend.dto.Leader;
 import com.hitmanbackend.dto.User;
-import com.hitmanbackend.entities.EliminationEntity;
-import com.hitmanbackend.entities.ScoreEntity;
-import com.hitmanbackend.entities.TestAccountEntity;
-import com.hitmanbackend.repositories.EliminationRepository;
-import com.hitmanbackend.repositories.ScoreRepository;
-import com.hitmanbackend.repositories.TestAccountRepository;
+import com.hitmanbackend.entities.*;
+import com.hitmanbackend.repositories.*;
 import com.hitmanbackend.requests.PlayerIdRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -93,8 +89,10 @@ public class UserService {
         Long rank = 1L;
         for (ScoreEntity score:
              scores) {
-            leaders.add(new Leader(rank, score.getPlayer().getName(),score.getScore()));
-            rank++;
+            if(score.getScore() > 0){
+                leaders.add(new Leader(rank, score.getPlayer().getName(),score.getScore()));
+                rank++;
+            }
         }
         return leaders;
     }

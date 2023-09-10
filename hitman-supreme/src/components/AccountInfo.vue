@@ -5,7 +5,7 @@
       height="200px"
       cover
     ></v-img>
-    <v-card-title>Welcome agent {{props.name}} !</v-card-title>
+    <v-card-title>Welcome agent {{props.name}}!</v-card-title>
     <v-card-title> Your elimination code: {{props.eliminationCode}} </v-card-title>
     <v-card-title> Points: {{props.score}} </v-card-title>
   </v-card>

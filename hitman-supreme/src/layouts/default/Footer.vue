@@ -1,9 +1,9 @@
 <template>
-  <v-footer class="justify-center bg-transparent ma-14">
-    <v-row class="footer justify-center bg-transparent ma-14">
+  <v-footer class="justify-center bg-transparent">
+    <v-row class="d-flex footer justify-center align-center bg-transparent ma-14">
       <v-col></v-col>
-      <v-col class="text-white d-flex justify-center align-center">
-        {{ new Date().getFullYear() }} — <strong>Hitman</strong>
+      <v-col class="d-flex text-white justify-center align-center">
+        <p>{{ new Date().getFullYear() }} — <strong>Hitman</strong></p>
       </v-col>
       <v-img src="@/assets/studentDays.png">
       </v-img>
