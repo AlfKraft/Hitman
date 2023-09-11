@@ -6,8 +6,10 @@
       cover
     ></v-img>
     <v-card-title>Welcome agent {{props.name}}!</v-card-title>
-    <v-card-title> Your elimination code: {{props.eliminationCode}} </v-card-title>
-    <v-card-title> Points: {{props.score}} </v-card-title>
+    <v-card-title v-if="eliminated" class="text-red">You are eliminated!</v-card-title>
+    <v-card-text v-if="eliminated">Keep an eye on the missions. There might be a chance to revive you.</v-card-text>
+    <v-card-title v-if="!eliminated"> Your elimination code: {{props.eliminationCode}} </v-card-title>
+    <v-card-title> Points: {{props.score}}p </v-card-title>
   </v-card>
 </template>
 
@@ -18,6 +20,7 @@ const props = defineProps({
   name: String,
   eliminationCode: String,
   score : String,
+  eliminated: Boolean
 })
 /*
 function getRankingEnding(){

@@ -16,7 +16,7 @@ import java.util.Optional;
 public class UserService {
 
     @Autowired
-    TestAccountRepository testAccountRepository;
+    PlayerRepository playerRepository;
 
     @Autowired
     ScoreRepository scoreRepository;
@@ -28,15 +28,15 @@ public class UserService {
     public List<User> getAllPlayers() {
 
         List<User> players = new ArrayList<>();
-        List<TestAccountEntity> users = testAccountRepository.findAllByRoleEquals("USER");
+        List<PlayerDataEntity> users = playerRepository.findAllByRoleEquals("USER");
 
-        for (TestAccountEntity entity:
+        for (PlayerDataEntity entity:
              users) {
             Long points = 0L;
             if(entity.getScoreEntity() != null){
                 points = entity.getScoreEntity().getScore();
             }
-            players.add(new User(entity.getId(), entity.getUsername(), entity.getName(), points, entity.getEliminated()));
+            players.add(new User(entity.getId(), entity.getUsername(),"%s %s".formatted(entity.getFirstName(), entity.getLastName()), points, entity.getEliminated()));
         }
 
         return players;
@@ -44,7 +44,7 @@ public class UserService {
     }
 
     public void eliminatePlayer(PlayerIdRequest request) throws Exception {
-        Optional<TestAccountEntity> player = testAccountRepository.findById(request.getId());
+        Optional<PlayerDataEntity> player = playerRepository.findById(request.getId());
         if (player.isPresent()){
             if (player.get().getEliminated()){
                 throw new Exception("Player is already eliminated.");
@@ -64,20 +64,20 @@ public class UserService {
                 }
             }
             player.get().setEliminated(true);
-            testAccountRepository.save(player.get());
+            playerRepository.save(player.get());
             return;
         }
         throw new Exception("Couldn't find player form database");
     }
 
     public void revivePlayer(PlayerIdRequest request) throws Exception {
-        Optional<TestAccountEntity> player = testAccountRepository.findById(request.getId());
+        Optional<PlayerDataEntity> player = playerRepository.findById(request.getId());
         if (player.isPresent()){
             if (!player.get().getEliminated()){
                 throw new Exception("Player is alive.");
             }
             player.get().setEliminated(false);
-            testAccountRepository.save(player.get());
+            playerRepository.save(player.get());
             return;
         }
         throw new Exception("Couldn't find player form database");
@@ -90,7 +90,8 @@ public class UserService {
         for (ScoreEntity score:
              scores) {
             if(score.getScore() > 0){
-                leaders.add(new Leader(rank, score.getPlayer().getName(),score.getScore()));
+                leaders.add(new Leader(rank, "%s %s".formatted(score.getPlayer().getFirstName(),
+                        score.getPlayer().getLastName()),score.getScore()));
                 rank++;
             }
         }

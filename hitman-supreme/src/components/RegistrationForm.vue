@@ -1,8 +1,9 @@
 <template>
-  <v-container>
+  <v-container  v-if="!loading">
+    <v-alert class="bg-transparent" v-if="errorMessage">{{errorMessage}}</v-alert>
     <v-form v-if="!registered">
       <v-file-input
-        label="File input"
+        label="Profile picture"
         accept="image/*"
         variant="filled"
         append-inner-icon="mdi-camera"
@@ -13,20 +14,23 @@
       <v-text-field v-model="regData.birthdate" :error-messages="errorBirthdate()" type="date" pattern="dd-mm-yyyy" @input="dateChange" label="Birth date"></v-text-field>
       <v-text-field v-model="regData.facebook" :error-messages="errorFacebook()" @input="facebookChange" label="Facebook profile link"></v-text-field>
       <v-text-field v-model="regData.schoolAndSpeciality" :error-messages="errorSchoolAndSpeciality()" @input="schoolAndSpecialityChange" label="School and Speciality"></v-text-field>
-      <v-text-field v-model="regData.workplace" :error-messages="errorWorkplace()" @input="workplaceChange" label="Work place"></v-text-field>
+      <v-text-field v-model="regData.workPlace" :error-messages="errorWorkplace()" @input="workplaceChange" label="Work place"></v-text-field>
       <v-text-field v-model="regData.hobbies" :error-messages="errorHobbies()" @input="hobbiesChange" label="Hobbies"></v-text-field>
-      <v-text-field v-model="regData.homeStreet" :error-messages="errorHomeStreet()" @input="homeStreetChange" label="Home street"></v-text-field>
       <v-text-field v-model="regData.mostVisitedPlaces" :error-messages="errorMostVisitedPlaces()" @input="mostVisitedPlacesChange" label="Your favorite places to go to"></v-text-field>
-      <v-text-field v-model="regData.phoneNumber" :error-messages="errorPhoneNumber()" @input="phoneNumberChange" label="Phone number"></v-text-field>
+      <v-tooltip text="Only for the organizers">
+        <template v-slot:activator="{ props }">
+      <v-text-field v-bind="props" v-model="regData.phoneNumber" :error-messages="errorPhoneNumber()" @input="phoneNumberChange" label="Phone number"></v-text-field>
+        </template>
+      </v-tooltip>
       <v-text-field v-model="regData.username" :error-messages="errorUsername()" append-inner-icon="mdi-account" @input="usernameChange" type="username" label="Username"></v-text-field>
       <v-text-field v-model="regData.password" :error-messages="errorPassword()" append-inner-icon="mdi-lock-outline" @input="passwordChange" type="password" label="Password"/>
       <v-text-field v-model="regData.repeatedPassword" :error-messages="errorConfirmPassword()" append-inner-icon="mdi-lock-alert-outline" @input="confirmPasswordChange" type="password" label="Repeat Password"/>
       <v-btn @click="register">Register</v-btn>
     </v-form>
-    <v-card v-else>
-      <v-card-text>Registered</v-card-text>
-    <v-btn to="/login">Log in</v-btn>
-    </v-card>
+    <v-btn v-if="registered" to="/login">Log in</v-btn>
+  </v-container>
+  <v-container v-else>
+    <Loading/>
   </v-container>
 </template>
 <script setup>
@@ -34,10 +38,11 @@
 import {inject, computed, reactive, ref} from 'vue';
 import {useVuelidate} from '@vuelidate/core'
 import {required, email, minLength, sameAs, helpers} from '@vuelidate/validators'
-
+import Loading from "@/components/Loading";
 const axios = inject('axios');
+const errorMessage = ref(null)
+const loading = ref(false)
 const registered = ref(false);
-const token = ref('');
 
 const passwordValidation = (value) => {
   let number = false;
@@ -61,9 +66,8 @@ const rules = computed(()=> {
     birthdate: {required},
     facebook: {required, facebookValidation: helpers.withMessage("Must contain facebook link", facebookValidation)},
     schoolAndSpeciality: {required},
-    workplace: {required},
+    workPlace: {required},
     hobbies: {required},
-    homeStreet: {required},
     mostVisitedPlaces: {required},
     phoneNumber: {required, minlength: minLength(6)},
     username:{required, minlength: minLength(6)},
@@ -79,9 +83,8 @@ const regData = reactive({
   birthdate: '',
   facebook: '',
   schoolAndSpeciality: '',
-  workplace: '',
+  workPlace: '',
   hobbies: '',
-  homeStreet: '',
   mostVisitedPlaces: '',
   phoneNumber: '',
   username:'',
@@ -93,15 +96,17 @@ const $v = useVuelidate(rules, regData)
 async function register(){
   const valid = await $v.value.$validate()
   if (valid){
-    registered.value = true
-    axios.post("/home/register", regData)
-      .then(response => {
-        token.value = response.data.token
-        axios.defaults.headers.common['Authorization'] = 'Bearer ' + token.value;
-        localStorage.setItem("token", token.value);
-    })
+    loading.value = true
+    await axios.post("/register", regData)
+      .then(() => {
+        errorMessage.value = "You are registered. Proceed to the log in tab."
+        registered.value = true
+      })
+      .catch(error => {
+        errorMessage.value = error.response.data.message
+      })
   }
-
+  loading.value = false
 }
 function emailChange(){
   $v.value.email.$touch()
@@ -122,13 +127,10 @@ function schoolAndSpecialityChange(){
   $v.value.schoolAndSpeciality.$touch()
 }
 function workplaceChange(){
-  $v.value.workplace.$touch()
+  $v.value.workPlace.$touch()
 }
 function hobbiesChange(){
   $v.value.hobbies.$touch()
-}
-function homeStreetChange(){
-  $v.value.homeStreet.$touch()
 }
 function mostVisitedPlacesChange(){
   $v.value.mostVisitedPlaces.$touch()
@@ -188,49 +190,54 @@ function errorBirthdate() {
 function errorFacebook(){
   if ($v.value.facebook.$dirty) {
     $v.value.facebook.$validate()
-    return [$v.value.facebook.$errors[0].$message]
+    if ($v.value.facebook.$errors.length > 0) {
+      return [$v.value.facebook.$errors[0].$message]
+    }
   }
   return []
 }
 function errorSchoolAndSpeciality(){
   if ($v.value.schoolAndSpeciality.$dirty) {
     $v.value.schoolAndSpeciality.$validate()
-    return [$v.value.schoolAndSpeciality.$errors[0].$message]
+    if ($v.value.schoolAndSpeciality.$errors.length > 0) {
+      return [$v.value.schoolAndSpeciality.$errors[0].$message]
+    }
   }
   return []
 }
 function errorWorkplace(){
-  if ($v.value.workplace.$dirty) {
-    $v.value.workplace.$validate()
-    return [$v.value.workplace.$errors[0].$message]
+  if ($v.value.workPlace.$dirty) {
+    $v.value.workPlace.$validate()
+    if ($v.value.workPlace.$errors.length > 0) {
+      return [$v.value.workPlace.$errors[0].$message]
+    }
   }
   return []
 }
 function errorHobbies(){
   if ($v.value.hobbies.$dirty) {
     $v.value.hobbies.$validate()
-    return [$v.value.hobbies.$errors[0].$message]
-  }
-  return []
-}
-function errorHomeStreet(){
-  if ($v.value.homeStreet.$dirty) {
-    $v.value.homeStreet.$validate()
-    return [$v.value.homeStreet.$errors[0].$message]
+    if ($v.value.hobbies.$errors.length > 0) {
+      return [$v.value.hobbies.$errors[0].$message]
+    }
   }
   return []
 }
 function errorMostVisitedPlaces(){
   if ($v.value.mostVisitedPlaces.$dirty) {
     $v.value.mostVisitedPlaces.$validate()
-    return [$v.value.mostVisitedPlaces.$errors[0].$message]
+    if ($v.value.mostVisitedPlaces.$errors.length > 0) {
+      return [$v.value.mostVisitedPlaces.$errors[0].$message]
+    }
   }
   return []
 }
 function errorPhoneNumber(){
   if ($v.value.phoneNumber.$dirty) {
     $v.value.phoneNumber.$validate()
-    return [$v.value.phoneNumber.$errors[0].$message]
+    if ($v.value.phoneNumber.$errors.length > 0) {
+      return [$v.value.phoneNumber.$errors[0].$message]
+    }
   }
   return []
 }

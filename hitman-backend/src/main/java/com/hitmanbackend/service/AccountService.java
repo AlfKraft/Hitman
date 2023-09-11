@@ -1,5 +1,9 @@
 package com.hitmanbackend.service;
 
+import com.hitmanbackend.entities.CredentialsEntity;
+import com.hitmanbackend.entities.PlayerDataEntity;
+import com.hitmanbackend.repositories.CredentialsRepository;
+import com.hitmanbackend.repositories.PlayerRepository;
 import com.hitmanbackend.service.Account;
 import com.hitmanbackend.entities.TestAccountEntity;
 import com.hitmanbackend.repositories.TestAccountRepository;
@@ -19,17 +23,23 @@ import java.util.Optional;
 public class AccountService implements UserDetailsService {
 
     @Autowired
-    TestAccountRepository testAccountRepository;
+    CredentialsRepository credentialsRepository;
+    @Autowired
+    PlayerRepository playerRepository;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<TestAccountEntity> account = testAccountRepository.findAccountByUsername(username);
+        Optional<PlayerDataEntity> account = playerRepository.findAccountByUsername(username);
+        if (!credentialsRepository.existsByUsername(username) ){
+            throw new UsernameNotFoundException("User Not Found with username: " + username);
+        }
         if (account.isEmpty()){
             throw new UsernameNotFoundException("User Not Found with username: " + username);
         }
+        Optional<CredentialsEntity> creds = credentialsRepository.findByUsername(username);
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(account.get().getRole()));
-        return new Account(account.get().getUsername(), account.get().getPassword(), authorities);
+        return new Account(account.get().getUsername(), creds.get().getPassword(), authorities);
 
     }
 }

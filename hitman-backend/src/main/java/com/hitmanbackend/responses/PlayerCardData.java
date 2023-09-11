@@ -8,10 +8,13 @@ public class PlayerCardData {
 
     private Long score;
 
-    public PlayerCardData(String name, String eliminationCode, Long score) {
+    private Boolean isEliminated;
+
+    public PlayerCardData(String name, String eliminationCode, Long score, Boolean isEliminated) {
         this.name = name;
         this.eliminationCode = eliminationCode;
         this.score = score;
+        this.isEliminated = isEliminated;
     }
 
     public PlayerCardData() {
@@ -39,5 +42,13 @@ public class PlayerCardData {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Boolean getEliminated() {
+        return isEliminated;
+    }
+
+    public void setEliminated(Boolean isEliminated) {
+        this.isEliminated = isEliminated;
     }
 }

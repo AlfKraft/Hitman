@@ -12,17 +12,17 @@ public class EliminationEntity {
 
     @JoinColumn(name = "player_id")
     @OneToOne
-    private TestAccountEntity player;
+    private PlayerDataEntity player;
     private String eliminationCode;
 
     @JoinColumn(name = "target_id")
     @OneToOne
-    private TestAccountEntity target;
+    private PlayerDataEntity target;
 
     public EliminationEntity() {
     }
 
-    public EliminationEntity(TestAccountEntity player, String eliminationCode, TestAccountEntity target) {
+    public EliminationEntity(PlayerDataEntity player, String eliminationCode, PlayerDataEntity target) {
         this.player = player;
         this.eliminationCode = eliminationCode;
         this.target = target;
@@ -44,19 +44,19 @@ public class EliminationEntity {
         this.eliminationCode = eliminationCode;
     }
 
-    public TestAccountEntity getPlayer() {
+    public PlayerDataEntity getPlayer() {
         return player;
     }
 
-    public void setPlayer(TestAccountEntity player) {
+    public void setPlayer(PlayerDataEntity player) {
         this.player = player;
     }
 
-    public TestAccountEntity getTarget() {
+    public PlayerDataEntity getTarget() {
         return target;
     }
 
-    public void setTarget(TestAccountEntity target) {
+    public void setTarget(PlayerDataEntity target) {
         this.target = target;
     }
 }

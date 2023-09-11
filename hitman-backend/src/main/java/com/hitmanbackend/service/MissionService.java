@@ -1,14 +1,8 @@
 package com.hitmanbackend.service;
 
 import com.hitmanbackend.controllers.UserController;
-import com.hitmanbackend.entities.MissionAssignmentEntity;
-import com.hitmanbackend.entities.MissionEntity;
-import com.hitmanbackend.entities.ScoreEntity;
-import com.hitmanbackend.entities.TestAccountEntity;
-import com.hitmanbackend.repositories.MissionAssignmentEntityRepository;
-import com.hitmanbackend.repositories.MissionRepository;
-import com.hitmanbackend.repositories.ScoreRepository;
-import com.hitmanbackend.repositories.TestAccountRepository;
+import com.hitmanbackend.entities.*;
+import com.hitmanbackend.repositories.*;
 import com.hitmanbackend.requests.MissionCreationRequest;
 import com.hitmanbackend.responses.MissionResponse;
 import com.hitmanbackend.responses.MissionsResponse;
@@ -36,7 +30,7 @@ public class MissionService {
     @Autowired
     MissionAssignmentEntityRepository missionAssignmentEntityRepository;
     @Autowired
-    TestAccountRepository testAccountRepository;
+    PlayerRepository playerRepository;
     @Autowired
     RandomCode missionCode;
     SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
@@ -62,8 +56,8 @@ public class MissionService {
 
         Optional<MissionEntity> missionEntity = missionRepository.findByMissionName(request.getMissionName());
         if(missionEntity.isPresent()){
-            List<TestAccountEntity> players = testAccountRepository.findAllByRoleEquals("USER");
-            for (TestAccountEntity player:
+            List<PlayerDataEntity> players = playerRepository.findAllByRoleEquals("USER");
+            for (PlayerDataEntity player:
                  players) {
                 missionAssignmentEntityRepository.save(new MissionAssignmentEntity(missionEntity.get(), player,
                         false));
@@ -111,7 +105,7 @@ public class MissionService {
         DateTime nowEstonia = nowUtc.toDateTime(estonia);
         Date now = nowEstonia.plusHours(3).toDate();
         logger.info("%s queried missions at %s".formatted(username, outputFormat.format(now)));
-        Optional<TestAccountEntity> player = testAccountRepository.findAccountByUsername(username);
+        Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         MissionsResponse missionsResponse = new MissionsResponse();
         if (player.isPresent()){
             for (MissionAssignmentEntity mission:
@@ -162,7 +156,7 @@ public class MissionService {
     }
 
     public void completeMission(String username, Long missionId, String missionCode) throws Exception {
-        Optional<TestAccountEntity> player = testAccountRepository.findAccountByUsername(username);
+        Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         Instant nowUtc = Instant.now();
         DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
         DateTime nowEstonia = nowUtc.toDateTime(estonia);

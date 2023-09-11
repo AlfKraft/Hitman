@@ -16,11 +16,11 @@ public class MissionAssignmentEntity {
 
     @JoinColumn(name = "player_id")
     @ManyToOne
-    private TestAccountEntity player;
+    private PlayerDataEntity player;
 
     private Boolean completed;
 
-    public MissionAssignmentEntity(MissionEntity mission, TestAccountEntity player, Boolean completed) {
+    public MissionAssignmentEntity(MissionEntity mission, PlayerDataEntity player, Boolean completed) {
         this.mission = mission;
         this.player = player;
         this.completed = completed;
@@ -46,11 +46,11 @@ public class MissionAssignmentEntity {
         this.mission = mission;
     }
 
-    public TestAccountEntity getPlayer() {
+    public PlayerDataEntity getPlayer() {
         return player;
     }
 
-    public void setPlayer(TestAccountEntity player) {
+    public void setPlayer(PlayerDataEntity player) {
         this.player = player;
     }
 

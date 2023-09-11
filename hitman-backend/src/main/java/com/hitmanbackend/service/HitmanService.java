@@ -2,9 +2,11 @@ package com.hitmanbackend.service;
 
 import com.hitmanbackend.controllers.UserController;
 import com.hitmanbackend.entities.EliminationEntity;
+import com.hitmanbackend.entities.PlayerDataEntity;
 import com.hitmanbackend.entities.ScoreEntity;
 import com.hitmanbackend.entities.TestAccountEntity;
 import com.hitmanbackend.repositories.EliminationRepository;
+import com.hitmanbackend.repositories.PlayerRepository;
 import com.hitmanbackend.repositories.ScoreRepository;
 import com.hitmanbackend.repositories.TestAccountRepository;
 import com.hitmanbackend.responses.PlayerCardData;
@@ -26,7 +28,7 @@ public class HitmanService {
     EliminationRepository eliminationRepository;
 
     @Autowired
-    TestAccountRepository testAccountRepository;
+    PlayerRepository playerRepository;
     @Autowired
     RandomCode eliminationCode;
 
@@ -39,7 +41,7 @@ public class HitmanService {
     public void createANewGameCycle(){
         eliminationRepository.deleteAll();
 
-        List<TestAccountEntity> players = testAccountRepository.findByRoleEqualsAndEliminatedFalse("USER");
+        List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndEliminatedFalse("USER");
         if (players.isEmpty() || players.size() <= 5){
             return;
         }
@@ -78,8 +80,8 @@ public class HitmanService {
                     break;
                 }
             }
-            Optional<TestAccountEntity> player = testAccountRepository.findById(link.getKey());
-            Optional<TestAccountEntity> target = testAccountRepository.findById(link.getValue());
+            Optional<PlayerDataEntity> player = playerRepository.findById(link.getKey());
+            Optional<PlayerDataEntity> target = playerRepository.findById(link.getValue());
 
             if (player.isPresent() && target.isPresent()){
                 EliminationEntity eliminationCodeEntity = new EliminationEntity(player.get(),code,target.get());
@@ -91,11 +93,12 @@ public class HitmanService {
     }
 
     public Target getPlayerTarget(String username) throws Exception {
-        Optional<TestAccountEntity> player = testAccountRepository.findAccountByUsername(username);
+        Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         if (player.isPresent()){
             Optional<EliminationEntity> eliminationInfo = eliminationRepository.findByPlayerId(player.get().getId());
             if (eliminationInfo.isPresent()){
-                return new Target(eliminationInfo.get().getTarget().getName(), eliminationInfo.get().getTarget().getAboutInfo());
+                return new Target("%s %s".formatted(eliminationInfo.get().getTarget().getFirstName(), eliminationInfo
+                        .get().getTarget().getLastName()), "");
 
             }
         }
@@ -103,7 +106,7 @@ public class HitmanService {
     }
 
     public Target eliminateTarget(String username, String eliminationCode) throws Exception {
-        Optional<TestAccountEntity> player = testAccountRepository.findAccountByUsername(username);
+        Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         if(player.isPresent()) {
             Optional<EliminationEntity> eliminationEntity = eliminationRepository.findByPlayerId(player.get().getId());
             if (eliminationEntity.isPresent()) {
@@ -119,15 +122,15 @@ public class HitmanService {
                         else {
                             scoreRepository.save(new ScoreEntity(player.get(), 100L));
                         }
-                        TestAccountEntity eliminated = eliminationEntity.get().getTarget();
+                        PlayerDataEntity eliminated = eliminationEntity.get().getTarget();
                         eliminated.setEliminated(true);
-                        testAccountRepository.save(eliminated);
+                        playerRepository.save(eliminated);
                         eliminationEntity.get().setEliminationCode(nextEliminationData.get().getEliminationCode());
                         eliminationEntity.get().setTarget(nextEliminationData.get().getTarget());
                         eliminationRepository.save(eliminationEntity.get());
                         eliminationRepository.delete(nextEliminationData.get());
-                        return new Target(eliminationEntity.get().getTarget().getName(), eliminationEntity.get()
-                                .getTarget().getAboutInfo());
+                        return new Target("%s %s".formatted(eliminationEntity.get().getTarget().getFirstName(), eliminationEntity
+                                .get().getTarget().getLastName()), "");
                     }
                     else {
                         logger.error("Target %s doesn't have a next target assigned.".formatted(nextEliminationData.get().getPlayer().getUsername()));
@@ -151,9 +154,9 @@ public class HitmanService {
     }
 
     public void nullifyAllScores(){
-        List<TestAccountEntity> allPlayers = testAccountRepository.findAllByRoleEquals("USER");
+        List<PlayerDataEntity> allPlayers = playerRepository.findAllByRoleEquals("USER");
 
-        for (TestAccountEntity account:
+        for (PlayerDataEntity account:
              allPlayers) {
             scoreRepository.save(new ScoreEntity(account, 0L));
         }
@@ -161,18 +164,19 @@ public class HitmanService {
 
     public PlayerCardData getPlayerCardData(String username) throws Exception {
         PlayerCardData playerCardData = new PlayerCardData();
-        Optional<TestAccountEntity> player = testAccountRepository.findAccountByUsername(username);
+        Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         if(player.isPresent()){
             Optional<EliminationEntity> eliminationData = eliminationRepository.findByTargetId(player.get().getId());
             Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
             if (eliminationData.isPresent() && score.isPresent()){
-                playerCardData.setName(player.get().getName());
+                playerCardData.setName("%s %s".formatted(player.get().getFirstName(), player.get().getLastName()));
                 playerCardData.setEliminationCode(eliminationData.get().getEliminationCode());
                 playerCardData.setScore(score.get().getScore());
+                playerCardData.setEliminated(player.get().getEliminated());
                 return playerCardData;
             }
             if (score.isPresent()){
-                return new PlayerCardData(player.get().getName(), "", score.get().getScore());
+                return new PlayerCardData("%s %s".formatted(player.get().getFirstName(), player.get().getLastName()), "", score.get().getScore(), player.get().getEliminated());
             }
         }
         throw new Exception("Couldn't retrieve player's data.");

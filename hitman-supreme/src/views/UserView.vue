@@ -1,7 +1,7 @@
 <template>
   <v-row class="d-flex justify-center align-center ma-3">
     <v-col class="d-flex justify-center align-center">
-      <AccountInfo v-if="!loading" class="mainComponent" :name=name :elimination-code=eliminationCode :score=score />
+      <AccountInfo v-if="!loading" class="mainComponent" :name=name :elimination-code=eliminationCode :score=score :eliminated="eliminated"/>
       <v-card v-else>
       <Loading/>
       </v-card>
@@ -91,6 +91,7 @@ const name = ref('')
 const eliminationCode = ref('')
 const score = ref('')
 const errorMessage = ref(null)
+const eliminated = ref(false)
 const store = userStore()
 const missionsStore = missionStore()
 const leaderBoardData = ref([])
@@ -103,6 +104,7 @@ onMounted( async ()=>{
     name.value = response.data.name
     eliminationCode.value = response.data.eliminationCode
     score.value = response.data.score
+    eliminated.value = response.data.eliminated
   }).catch(error => {
     errorMessage.value = error.response.data.message
   })

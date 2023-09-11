@@ -26,6 +26,7 @@ public class TestAccountEntity {
 
     private Boolean eliminated;
 
+    /*
     @OneToOne(mappedBy = "player")
     private EliminationEntity playerEntity;
 
@@ -38,6 +39,8 @@ public class TestAccountEntity {
     @OneToMany(mappedBy = "player")
     private Set<MissionAssignmentEntity> missions = new HashSet<>();
 
+
+     */
     public Boolean getEliminated() {
         return eliminated;
     }
@@ -104,25 +107,5 @@ public class TestAccountEntity {
 
     public void setAboutInfo(String aboutInfo) {
         this.aboutInfo = aboutInfo;
-    }
-
-    public ScoreEntity getScoreEntity() {
-        return scoreEntity;
-    }
-
-    public void setScoreEntity(ScoreEntity scoreEntity) {
-        this.scoreEntity = scoreEntity;
-    }
-
-    public EliminationEntity getPlayerEntity() {
-        return playerEntity;
-    }
-
-    public EliminationEntity getTargetEntity() {
-        return targetEntity;
-    }
-
-    public Set<MissionAssignmentEntity> getMissions() {
-        return missions;
     }
 }

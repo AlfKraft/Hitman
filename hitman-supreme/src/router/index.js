@@ -142,7 +142,7 @@ const router = createRouter({
   routes,
 })
 
-/*
+
 router.beforeEach(async (to) => {
   // redirect to login page if not logged in and trying to access a restricted page
   NProgress.start()
@@ -177,8 +177,6 @@ router.beforeEach(async (to) => {
   }
   NProgress.done()
 })
-
- */
 
 
 

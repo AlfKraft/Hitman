@@ -1,9 +1,9 @@
 <template>
-<TestRegForm class="bg-red-darken-4 rounded" id="reg-form"/>
+<RegistrationForm class="bg-red-darken-4 rounded" id="reg-form"/>
 </template>
 
 <script setup>
-import TestRegForm from "@/components/TestRegForm";
+import RegistrationForm from "@/components/RegistrationForm.vue";
 </script>
 
 <style scoped>

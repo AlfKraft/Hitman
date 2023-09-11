@@ -1,5 +1,6 @@
 package com.hitmanbackend.controllers;
 
+import com.hitmanbackend.dto.AccountDataDTO;
 import com.hitmanbackend.dto.TestAccountDto;
 import com.hitmanbackend.entities.TestAccountEntity;
 import com.hitmanbackend.mappers.AccountMapper;
@@ -29,7 +30,7 @@ public class RegistrationController {
     }
 
     @PostMapping("/hitman-backend/register")
-    public ResponseEntity<?> registerAccount(@RequestBody TestAccountDto accountDto){
+    public ResponseEntity<?> registerAccount(@RequestBody AccountDataDTO accountDto){
 
         try {
             registrationService.registerAccount(accountDto);

@@ -12,7 +12,7 @@ public class ScoreEntity {
 
     @JoinColumn(name = "player_id")
     @OneToOne(fetch = FetchType.LAZY)
-    private TestAccountEntity player;
+    private PlayerDataEntity player;
 
     private Long score;
 
@@ -20,8 +20,7 @@ public class ScoreEntity {
     public ScoreEntity() {
     }
 
-    public ScoreEntity(TestAccountEntity player, Long score) {
-        this.id = id;
+    public ScoreEntity(PlayerDataEntity player, Long score) {
         this.player = player;
         this.score = score;
     }
@@ -42,7 +41,7 @@ public class ScoreEntity {
         this.score = score;
     }
 
-    public TestAccountEntity getPlayer() {
+    public PlayerDataEntity getPlayer() {
         return player;
     }
 }
