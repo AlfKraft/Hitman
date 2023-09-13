@@ -42,7 +42,7 @@ public class HitmanService {
         eliminationRepository.deleteAll();
 
         List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndEliminatedFalse("USER");
-        if (players.isEmpty() || players.size() <= 5){
+        if (players.isEmpty() || players.size() < 3){
             return;
         }
         List<String> eliminationCodes = new ArrayList<>();
@@ -97,8 +97,13 @@ public class HitmanService {
         if (player.isPresent()){
             Optional<EliminationEntity> eliminationInfo = eliminationRepository.findByPlayerId(player.get().getId());
             if (eliminationInfo.isPresent()){
-                return new Target("%s %s".formatted(eliminationInfo.get().getTarget().getFirstName(), eliminationInfo
-                        .get().getTarget().getLastName()), "");
+                return new Target("%s %s".formatted(eliminationInfo.get().getTarget().getFirstName(), eliminationInfo.get().getTarget().getLastName()),
+                        eliminationInfo.get().getTarget().getFacebook(),
+                        eliminationInfo.get().getTarget().getSchoolAndSpeciality(),
+                        eliminationInfo.get().getTarget().getWorkPlace(),
+                        eliminationInfo.get().getTarget().getHobbies(),
+                        eliminationInfo.get().getTarget().getFavoritePlaces()
+                        ,eliminationInfo.get().getTarget().getProfileImage());
 
             }
         }
@@ -129,8 +134,13 @@ public class HitmanService {
                         eliminationEntity.get().setTarget(nextEliminationData.get().getTarget());
                         eliminationRepository.save(eliminationEntity.get());
                         eliminationRepository.delete(nextEliminationData.get());
-                        return new Target("%s %s".formatted(eliminationEntity.get().getTarget().getFirstName(), eliminationEntity
-                                .get().getTarget().getLastName()), "");
+                        return new Target("%s %s".formatted(eliminationEntity.get().getTarget().getFirstName(), eliminationEntity.get().getTarget().getLastName()),
+                                eliminationEntity.get().getTarget().getFacebook(),
+                                eliminationEntity.get().getTarget().getSchoolAndSpeciality(),
+                                eliminationEntity.get().getTarget().getWorkPlace(),
+                                eliminationEntity.get().getTarget().getHobbies(),
+                                eliminationEntity.get().getTarget().getFavoritePlaces()
+                                ,eliminationEntity.get().getTarget().getProfileImage());
                     }
                     else {
                         logger.error("Target %s doesn't have a next target assigned.".formatted(nextEliminationData.get().getPlayer().getUsername()));

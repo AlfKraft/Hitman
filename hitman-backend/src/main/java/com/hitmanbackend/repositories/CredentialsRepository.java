@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface CredentialsRepository  extends JpaRepository<CredentialsEntity, Long> {
-    Boolean existsByUsername(String username);
+    Boolean existsByUsernameIgnoreCase(String username);
 
     Optional<CredentialsEntity> findByUsername(String username);
 }

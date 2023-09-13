@@ -6,13 +6,14 @@
         label="Profile picture"
         accept="image/*"
         variant="filled"
+        @change="onFileUpload"
         append-inner-icon="mdi-camera"
       ></v-file-input>
       <v-text-field v-model="regData.firstName" :error-messages="errorFirstName()" @input="firstNameChange" label="First name"></v-text-field>
       <v-text-field v-model="regData.lastName" :error-messages="errorLastName()" @input="lastNameChange" label="Last Name"></v-text-field>
       <v-text-field v-model="regData.email" :error-messages="errorEmail()" append-inner-icon="mdi-email" type="email" @input="emailChange" label="Email"></v-text-field>
       <v-text-field v-model="regData.birthdate" :error-messages="errorBirthdate()" type="date" pattern="dd-mm-yyyy" @input="dateChange" label="Birth date"></v-text-field>
-      <v-text-field v-model="regData.facebook" :error-messages="errorFacebook()" @input="facebookChange" label="Facebook profile link"></v-text-field>
+      <v-text-field v-model="regData.facebook" :error-messages="errorFacebook()" @input="facebookChange" label="Social media link"></v-text-field>
       <v-text-field v-model="regData.schoolAndSpeciality" :error-messages="errorSchoolAndSpeciality()" @input="schoolAndSpecialityChange" label="School and Speciality"></v-text-field>
       <v-text-field v-model="regData.workPlace" :error-messages="errorWorkplace()" @input="workplaceChange" label="Work place"></v-text-field>
       <v-text-field v-model="regData.hobbies" :error-messages="errorHobbies()" @input="hobbiesChange" label="Hobbies"></v-text-field>
@@ -43,6 +44,7 @@ const axios = inject('axios');
 const errorMessage = ref(null)
 const loading = ref(false)
 const registered = ref(false);
+const formData = new FormData()
 
 const passwordValidation = (value) => {
   let number = false;
@@ -55,16 +57,14 @@ const passwordValidation = (value) => {
   return (value.includes("!") || value.includes("?") || value.includes("#") || value.includes("+")) && number
 }
 
-const facebookValidation = (value) => {
-  return value.includes("facebook.com")
-}
+
 const rules = computed(()=> {
   return {
     firstName: {required, minlength: minLength(3)},
     lastName:{required, minlength: minLength(3)},
     email:{required, email},
     birthdate: {required},
-    facebook: {required, facebookValidation: helpers.withMessage("Must contain facebook link", facebookValidation)},
+    facebook: {required},
     schoolAndSpeciality: {required},
     workPlace: {required},
     hobbies: {required},
@@ -77,6 +77,7 @@ const rules = computed(()=> {
 });
 
 const regData = reactive({
+  profileImage: null,
   firstName: '',
   lastName:'',
   email:'',
@@ -92,19 +93,57 @@ const regData = reactive({
   repeatedPassword:'',
 });
 
+function onFileUpload(event){
+  regData.profileImage = event.target.files[0]
+}
+
 const $v = useVuelidate(rules, regData)
 async function register(){
   const valid = await $v.value.$validate()
   if (valid){
-    loading.value = true
-    await axios.post("/register", regData)
-      .then(() => {
-        errorMessage.value = "You are registered. Proceed to the log in tab."
-        registered.value = true
-      })
-      .catch(error => {
-        errorMessage.value = error.response.data.message
-      })
+    if (!regData.profileImage){
+      errorMessage.value = "Image is mandatory."
+    }
+    else {
+      loading.value = true
+      formData.append('profileImage', regData.profileImage)
+      formData.append('firstName', regData.firstName)
+      formData.append('lastName', regData.lastName)
+      formData.append('email', regData.email)
+      formData.append('birthdate', regData.birthdate)
+      formData.append('facebook', regData.facebook)
+      formData.append('schoolAndSpeciality', regData.schoolAndSpeciality)
+      formData.append('workPlace', regData.workPlace)
+      formData.append('hobbies', regData.hobbies)
+      formData.append('mostVisitedPlaces', regData.mostVisitedPlaces)
+      formData.append('phoneNumber', regData.phoneNumber)
+      formData.append('username', regData.username)
+      formData.append('password', regData.password)
+      formData.append('repeatedPassword', regData.repeatedPassword)
+      await axios.post("/register", formData)
+        .then(() => {
+          errorMessage.value = "You are registered. Proceed to the log in tab."
+          registered.value = true
+        })
+        .catch(error => {
+          errorMessage.value = error.response.data.message
+          regData.profileImage = null
+          formData.delete('profileImage')
+          formData.delete('firstName')
+          formData.delete('lastName')
+          formData.delete('email')
+          formData.delete('birthdate')
+          formData.delete('facebook')
+          formData.delete('schoolAndSpeciality')
+          formData.delete('workPlace')
+          formData.delete('hobbies')
+          formData.delete('mostVisitedPlaces')
+          formData.delete('phoneNumber')
+          formData.delete('username')
+          formData.delete('password')
+          formData.delete('repeatedPassword')
+        })
+    }
   }
   loading.value = false
 }

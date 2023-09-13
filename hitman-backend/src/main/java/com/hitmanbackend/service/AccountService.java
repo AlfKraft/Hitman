@@ -31,7 +31,7 @@ public class AccountService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<PlayerDataEntity> account = playerRepository.findAccountByUsername(username);
-        if (!credentialsRepository.existsByUsername(username) ){
+        if (!credentialsRepository.existsByUsernameIgnoreCase(username) ){
             throw new UsernameNotFoundException("User Not Found with username: " + username);
         }
         if (account.isEmpty()){

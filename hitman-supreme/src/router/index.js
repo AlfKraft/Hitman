@@ -1,7 +1,6 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store';
-import {pinia} from "@/plugins/pinia";
 import NProgress from 'nprogress'
 
 const routes = [

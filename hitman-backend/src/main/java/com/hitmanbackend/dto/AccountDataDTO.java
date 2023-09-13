@@ -1,9 +1,12 @@
 package com.hitmanbackend.dto;
 
 import autovalue.shaded.org.jetbrains.annotations.NotNull;
+import org.springframework.web.multipart.MultipartFile;
 
 
 public class AccountDataDTO {
+
+    private MultipartFile profileImage;
 
     private String firstName;
 
@@ -31,7 +34,10 @@ public class AccountDataDTO {
 
     private String repeatedPassword;
 
-    public AccountDataDTO(String firstName, String lastName, String email, String birthdate, String facebook, String schoolAndSpeciality, String workPlace, String hobbies, String mostVisitedPlaces, String phoneNumber, String username, String password, String repeatedPassword) {
+    public AccountDataDTO(MultipartFile profileImage, String firstName, String lastName, String email, String birthdate, String facebook,
+                          String schoolAndSpeciality, String workPlace, String hobbies, String mostVisitedPlaces,
+                          String phoneNumber, String username, String password, String repeatedPassword) {
+        this.profileImage = profileImage;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -152,5 +158,13 @@ public class AccountDataDTO {
 
     public void setRepeatedPassword(String repeatedPassword) {
         this.repeatedPassword = repeatedPassword;
+    }
+
+    public MultipartFile getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(MultipartFile profileImage) {
+        this.profileImage = profileImage;
     }
 }

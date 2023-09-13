@@ -9,8 +9,12 @@ import java.util.Optional;
 
 public interface PlayerRepository extends JpaRepository<PlayerDataEntity, Long> {
     Optional<PlayerDataEntity> findAccountByUsername(String username);
-    Boolean existsByUsername(String username);
+    Boolean existsByUsernameIgnoreCase(String username);
     List<PlayerDataEntity> findByRoleEquals(String role);
+
+    Boolean existsByFirstNameAndLastName(String firstName, String lastname);
+
+    Boolean existsByEmail(String email);
 
     List<PlayerDataEntity> findByRoleEqualsAndEliminatedFalse(String role);
     List<PlayerDataEntity> findAllByRoleEquals(String role);
