@@ -2,33 +2,48 @@
   <v-container  v-if="!loading">
     <v-alert class="bg-transparent" v-if="errorMessage">{{errorMessage}}</v-alert>
     <v-form v-if="!registered">
+      <p class="ma-5">All the fields are mandatory. Fake or duplicate accounts will be deleted.</p>
       <v-file-input
         label="Profile picture"
         accept="image/*"
         variant="filled"
         @change="onFileUpload"
+        prepend-icon=""
         append-inner-icon="mdi-camera"
+        class="mt-3"
       ></v-file-input>
       <v-text-field v-model="regData.firstName" :error-messages="errorFirstName()" @input="firstNameChange" label="First name"></v-text-field>
       <v-text-field v-model="regData.lastName" :error-messages="errorLastName()" @input="lastNameChange" label="Last Name"></v-text-field>
-      <v-text-field v-model="regData.email" :error-messages="errorEmail()" append-inner-icon="mdi-email" type="email" @input="emailChange" label="Email"></v-text-field>
-      <v-text-field v-model="regData.birthdate" :error-messages="errorBirthdate()" type="date" pattern="dd-mm-yyyy" @input="dateChange" label="Birth date"></v-text-field>
-      <v-text-field v-model="regData.facebook" :error-messages="errorFacebook()" @input="facebookChange" label="Social media link"></v-text-field>
+       <v-text-field v-model="regData.facebook" :error-messages="errorFacebook()" @input="facebookChange" label="Social media link"></v-text-field>
       <v-text-field v-model="regData.schoolAndSpeciality" :error-messages="errorSchoolAndSpeciality()" @input="schoolAndSpecialityChange" label="School and Speciality"></v-text-field>
       <v-text-field v-model="regData.workPlace" :error-messages="errorWorkplace()" @input="workplaceChange" label="Work place"></v-text-field>
       <v-text-field v-model="regData.hobbies" :error-messages="errorHobbies()" @input="hobbiesChange" label="Hobbies"></v-text-field>
       <v-text-field v-model="regData.mostVisitedPlaces" :error-messages="errorMostVisitedPlaces()" @input="mostVisitedPlacesChange" label="Your favorite places to go to"></v-text-field>
-      <v-tooltip text="Only for the organizers">
-        <template v-slot:activator="{ props }">
-      <v-text-field v-bind="props" v-model="regData.phoneNumber" :error-messages="errorPhoneNumber()" @input="phoneNumberChange" label="Phone number"></v-text-field>
-        </template>
-      </v-tooltip>
+      <p class="ma-5">Following information is only for the organizers:</p>
+      <v-text-field v-model="regData.email" :error-messages="errorEmail()" append-inner-icon="mdi-email" type="email" @input="emailChange" label="Email"></v-text-field>
+      <v-text-field v-model="regData.birthdate" :error-messages="errorBirthdate()" type="date" pattern="dd-mm-yyyy" @input="dateChange" label="Birth date"></v-text-field>
+      <v-text-field v-model="regData.phoneNumber" :error-messages="errorPhoneNumber()" @input="phoneNumberChange" label="Phone number"></v-text-field>
       <v-text-field v-model="regData.username" :error-messages="errorUsername()" append-inner-icon="mdi-account" @input="usernameChange" type="username" label="Username"></v-text-field>
-      <v-text-field v-model="regData.password" :error-messages="errorPassword()" append-inner-icon="mdi-lock-outline" @input="passwordChange" type="password" label="Password"/>
-      <v-text-field v-model="regData.repeatedPassword" :error-messages="errorConfirmPassword()" append-inner-icon="mdi-lock-alert-outline" @input="confirmPasswordChange" type="password" label="Repeat Password"/>
+      <v-text-field v-model="regData.password" :type="show ? 'text' : 'password'" :error-messages="errorPassword()" @click:append-inner="show = !show" :append-inner-icon="show ? 'mdi-lock-open-variant-outline' : 'mdi-lock-outline'" @input="passwordChange" type="password" label="Password"/>
+      <v-text-field v-model="regData.repeatedPassword"  :error-messages="errorConfirmPassword()" append-inner-icon="mdi-lock-alert-outline" @input="confirmPasswordChange" type="password" label="Repeat Password"/>
       <v-btn @click="register">Register</v-btn>
     </v-form>
     <v-btn v-if="registered" to="/login">Log in</v-btn>
+    <div class="text-center">
+      <v-dialog
+        v-model="dialog"
+        width="auto"
+      >
+        <v-card>
+          <v-card-text>
+            {{errorMessage}}
+          </v-card-text>
+          <v-card-actions>
+            <v-btn block class="bg-red-darken-4" @click="dialog = false">Close</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
   </v-container>
   <v-container v-else>
     <Loading/>
@@ -45,6 +60,8 @@ const errorMessage = ref(null)
 const loading = ref(false)
 const registered = ref(false);
 const formData = new FormData()
+const show = ref(false)
+const dialog = ref(false)
 
 const passwordValidation = (value) => {
   let number = false;
@@ -100,6 +117,7 @@ function onFileUpload(event){
 const $v = useVuelidate(rules, regData)
 async function register(){
   const valid = await $v.value.$validate()
+  dialog.value = true
   if (valid){
     if (!regData.profileImage){
       errorMessage.value = "Image is mandatory."
@@ -145,6 +163,10 @@ async function register(){
         })
     }
   }
+  else {
+    errorMessage.value = "Fields are not filled correctly."
+  }
+
   loading.value = false
 }
 function emailChange(){

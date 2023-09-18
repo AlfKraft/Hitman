@@ -12,6 +12,7 @@
     <v-btn class="mr-2" v-if="isUserAdmin() || isUserUser()" @click="findRoute">MyHub</v-btn>
     <v-btn class="mr-2" v-if="isUserUser()" to="/missions">Missions</v-btn>
     <v-btn class="mr-2" v-if="isUserUser()" to="/target">Target</v-btn>
+    <v-btn class="mr-2" v-if="isUserUser()" to="/checkpoints">Checkpoints</v-btn>
     <v-btn class="mr-2" v-if="isUserAdmin()" to="/missionhub">MissionHub</v-btn>
     <v-btn class="mr-2" v-if="isUserAdmin()" to="/userhub">UserHUB</v-btn>
     <v-btn class="mr-2" v-if="(isUserAdmin() || isUserUser())" @click="logout">Logout</v-btn>
@@ -43,6 +44,9 @@
           </v-list-item>
           <v-list-item class="justify-center" v-if="isUserUser()">
             <v-btn class="bg-red-darken-4" to="/target">Target</v-btn>
+          </v-list-item>
+          <v-list-item class="justify-center" v-if="isUserUser()">
+            <v-btn class="bg-red-darken-4" to="/checkpoints">Checkpoints</v-btn>
           </v-list-item>
           <v-list-item class="justify-center" v-if="isUserAdmin()">
             <v-btn class="bg-red-darken-4"  to="/missionhub">MissionHub</v-btn>

@@ -9,7 +9,6 @@
         :headers="headers"
         :items="players"
         :items-per-page="10"
-        :item-class="row_class"
         class="elevation-1 rounded"
       >
         <template v-slot:item.eliminated="{ item }">
@@ -33,7 +32,7 @@ import {adminStore} from "@/stores/admin.store";
 
 const error = ref(null)
 const players = ref([])
-const loading = ref(true)
+const loading = ref(false)
 const storeU = userStore()
 const storeA = adminStore()
 const headers = ref([
@@ -46,7 +45,9 @@ const headers = ref([
     { title: 'Username', key: 'username', align: 'center' },
     { title: 'Name', key: 'name', align: 'center' },
     { title: 'Points', key: 'points', align: 'center' },
-    { title: '', key: 'eliminated', align: 'end', value: 'eliminated'}
+    { title: 'Email', key: 'email', align: 'center' },
+    { title: 'Phone', key: 'phoneNumber', align: 'center' },
+    { title: 'Game status', key: 'eliminated', align: 'end', value: 'eliminated'}
   ])
 
 onMounted(()=>{

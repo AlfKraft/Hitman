@@ -45,9 +45,17 @@ public class MissionService {
         Date now = nowEstonia.plusHours(3).toDate();
         Date startTime = inputFormat.parse(request.getStartDateTime());
         Date endTime = inputFormat.parse(request.getEndDateTime());
+
         if (startTime.before(now) || startTime.after(endTime) || endTime.before(now)){
             throw new Exception("Can't create mission with these dates. Start: %s, End: %s".formatted(request
                     .getStartDateTime(), request.getEndDateTime()));
+        }
+        if (missionRepository.existsByMissionName(request.getMissionName())){
+            throw new Exception("Duplicate mission name.");
+        }
+
+        if (request.getMissionCompletionCount() == null){
+            request.setMissionCompletionCount(0L);
         }
         MissionEntity newMissionEntity = new MissionEntity(request.getMissionName(), request.getMissionInfo(),
                 request.getStartDateTime(),request.getEndDateTime(),request.getMissionLocation(), request.getMissionCode()
@@ -56,12 +64,11 @@ public class MissionService {
 
         Optional<MissionEntity> missionEntity = missionRepository.findByMissionName(request.getMissionName());
         if(missionEntity.isPresent()){
-            List<PlayerDataEntity> players = playerRepository.findAllByRoleEquals("USER");
+            List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndApprovedTrue("USER");
             for (PlayerDataEntity player:
                  players) {
                 missionAssignmentEntityRepository.save(new MissionAssignmentEntity(missionEntity.get(), player,
                         false));
-
             }
 
         }
@@ -90,16 +97,15 @@ public class MissionService {
             missionResponse.setForEliminated(mission.getForEliminated());
             missionResponse.setMissionCompletionCount(mission.getMissionCompletionCount());
             missionResponse.setActive(true);
+            missionResponse.setMissionCode(mission.getMissionCode());
             missionsResponse.getMissions().add(missionResponse);
-
-
         }
         return missionsResponse;
     }
 
 
 
-    public MissionsResponse getMyMissions(String username) throws ParseException {
+    public MissionsResponse getMyMissions(String username) throws Exception {
         Instant nowUtc = Instant.now();
         DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
         DateTime nowEstonia = nowUtc.toDateTime(estonia);
@@ -107,11 +113,24 @@ public class MissionService {
         logger.info("%s queried missions at %s".formatted(username, outputFormat.format(now)));
         Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         MissionsResponse missionsResponse = new MissionsResponse();
+
         if (player.isPresent()){
+            if (!player.get().getApproved()){
+                throw new Exception("Player not approved.");
+            }
             for (MissionAssignmentEntity mission:
                  player.get().getMissions()) {
                 MissionResponse missionResponse = new MissionResponse();
                 if(!mission.getCompleted()){
+
+                    if (mission.getMission().getMissionCompletionCount() > 0){
+                        long missionCompletedCount = missionAssignmentEntityRepository.countByMissionIdAndCompleted(
+                                mission.getMission().getId(), true);
+                        if (mission.getMission().getMissionCompletionCount() <= missionCompletedCount){
+                            continue;
+                        }
+                    }
+
                     if(mission.getMission().getForEliminated() == player.get().getEliminated()) {
                         Date startTime = inputFormat.parse(mission.getMission().getStartTime());
                         Date endTime = inputFormat.parse(mission.getMission().getEndTime());
@@ -125,6 +144,7 @@ public class MissionService {
                             missionResponse.setLocation(mission.getMission().getLocation());
                             missionResponse.setPoints(mission.getMission().getPoints());
                             missionResponse.setForEliminated(mission.getMission().getForEliminated());
+
                             missionResponse.setActive(true);
 
                             missionsResponse.getMissions().add(missionResponse);
@@ -162,20 +182,35 @@ public class MissionService {
         DateTime nowEstonia = nowUtc.toDateTime(estonia);
         Date now = nowEstonia.plusHours(3).toDate();
         if (player.isPresent()){
+            if (!player.get().getApproved()){
+                throw new Exception("Player not approved.");
+            }
             for (MissionAssignmentEntity missionAssignment:
                  player.get().getMissions()) {
                 if (Objects.equals(missionAssignment.getMission().getId(), missionId)){
                     Date startTime = inputFormat.parse(missionAssignment.getMission().getStartTime());
                     Date endTime = inputFormat.parse(missionAssignment.getMission().getEndTime());
+
+                    if (missionAssignment.getMission().getMissionCompletionCount() > 0){
+                        long missionCompletedCount = missionAssignmentEntityRepository.countByMissionIdAndCompleted(missionId, true);
+                        if (missionAssignment.getMission().getMissionCompletionCount() <= missionCompletedCount){
+                            throw new Exception("Mission can't be completed. Count limit reached.");
+                        }
+                    }
                     if (now.after(startTime) && now.before(endTime)) {
                         if (missionAssignment.getMission().getMissionCode().equals(missionCode)) {
-                            Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
-
-                            if (score.isPresent()) {
-                                score.get().setScore(score.get().getScore() + missionAssignment.getMission().getPoints());
-                                scoreRepository.save(score.get());
-                            } else {
-                                scoreRepository.save(new ScoreEntity(player.get(), missionAssignment.getMission().getPoints()));
+                            if(missionAssignment.getMission().getForEliminated() && player.get().getEliminated()){
+                                player.get().setEliminated(false);
+                                playerRepository.save(player.get());
+                            }
+                            else {
+                                Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
+                                if (score.isPresent()) {
+                                    score.get().setScore(score.get().getScore() + missionAssignment.getMission().getPoints());
+                                    scoreRepository.save(score.get());
+                                } else {
+                                    scoreRepository.save(new ScoreEntity(player.get(), missionAssignment.getMission().getPoints()));
+                                }
                             }
                             missionAssignment.setCompleted(true);
                             missionAssignmentEntityRepository.save(missionAssignment);

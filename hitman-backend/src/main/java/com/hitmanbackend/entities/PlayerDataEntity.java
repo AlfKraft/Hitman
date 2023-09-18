@@ -45,6 +45,9 @@ public class PlayerDataEntity {
     @NotNull
     private String role;
 
+    @NotNull
+    private Boolean approved;
+
     @OneToOne(mappedBy = "player")
     private EliminationEntity playerEntity;
 
@@ -56,6 +59,9 @@ public class PlayerDataEntity {
 
     @OneToMany(mappedBy = "player")
     private Set<MissionAssignmentEntity> missions = new HashSet<>();
+
+    @OneToMany(mappedBy = "player")
+    private Set<CheckpointCompletionEntity> checkpoints = new HashSet<>();
 
     public PlayerDataEntity(Long id, String firstName, String lastName, String email, String birthdate, String facebook,
                             String schoolAndSpeciality, String workPlace, String hobbies, String favoritePlaces,
@@ -229,5 +235,21 @@ public class PlayerDataEntity {
 
     public void setMissions(Set<MissionAssignmentEntity> missions) {
         this.missions = missions;
+    }
+
+    public Set<CheckpointCompletionEntity> getCheckpoints() {
+        return checkpoints;
+    }
+
+    public void setCheckpoints(Set<CheckpointCompletionEntity> checkpoints) {
+        this.checkpoints = checkpoints;
+    }
+
+    public Boolean getApproved() {
+        return approved;
+    }
+
+    public void setApproved(Boolean approved) {
+        this.approved = approved;
     }
 }

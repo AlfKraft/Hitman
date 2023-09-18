@@ -132,6 +132,18 @@ const routes = [
         // which is lazy-loaded when the route is visited.
         component: () => import(/* webpackChunkName: "home" */ '@/views/NotFound.vue'),
       },
+      {
+        path: '/checkpoints',
+        name: 'Checkpoints',
+        // route level code-splitting
+        // this generates a separate chunk (about.[hash].js) for this route
+        // which is lazy-loaded when the route is visited.
+        component: () => import(/* webpackChunkName: "home" */ '@/views/CheckpointView.vue'),
+        meta:{
+          requiresAuth: true,
+          role: "USER"
+        }
+      },
     ],
   },
 ]
@@ -176,6 +188,8 @@ router.beforeEach(async (to) => {
   }
   NProgress.done()
 })
+
+
 
 
 

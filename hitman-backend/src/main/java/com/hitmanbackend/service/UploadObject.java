@@ -29,7 +29,7 @@ public class UploadObject {
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
         if (storage.get(bucketName, objectName) == null) {
             Blob blob = storage.create(blobInfo, file.getBytes());
-            URL signedUrl = blob.signUrl(14, TimeUnit.DAYS);
+            URL signedUrl = blob.signUrl(7, TimeUnit.DAYS, Storage.SignUrlOption.withV4Signature());
             return String.valueOf(signedUrl);
         }
         else {

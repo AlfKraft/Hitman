@@ -2,11 +2,14 @@ package com.hitmanbackend.controllers;
 
 import com.hitmanbackend.dto.User;
 import com.hitmanbackend.entities.MissionEntity;
+import com.hitmanbackend.requests.CheckpointCreationRequest;
 import com.hitmanbackend.requests.MissionCreationRequest;
 import com.hitmanbackend.requests.PlayerIdRequest;
+import com.hitmanbackend.responses.CheckpointListResponse;
 import com.hitmanbackend.responses.ErrorMessage;
 import com.hitmanbackend.responses.MessageResponse;
 import com.hitmanbackend.responses.MissionsResponse;
+import com.hitmanbackend.service.CheckpointService;
 import com.hitmanbackend.service.HitmanService;
 import com.hitmanbackend.service.MissionService;
 import com.hitmanbackend.service.UserService;
@@ -30,10 +33,14 @@ public class AdminController {
     UserService userService;
 
     @Autowired
+    CheckpointService checkpointService;
+
+    @Autowired
     MissionService missionService;
     @GetMapping("hitman-backend/codes")
     @PreAuthorize("hasRole('ADMIN')")
     public void createEliminationCodesForPlayers(){
+
         hitmanService.createANewGameCycle();
     }
 
@@ -47,6 +54,16 @@ public class AdminController {
             return ResponseEntity.badRequest().body(new ErrorMessage(exception.getMessage()));
         }
     }
+    @PostMapping("hitman-backend/createNewCheckpoint")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createNewCheckpoint(@RequestBody CheckpointCreationRequest request){
+        try {
+            checkpointService.createNewCheckpoint(request);
+            return ResponseEntity.ok(new MessageResponse("OK"));
+        }catch (Exception exception){
+            return ResponseEntity.badRequest().body(new ErrorMessage(exception.getMessage()));
+        }
+    }
 
 
     @GetMapping("hitman-backend/getMissions")
@@ -54,6 +71,17 @@ public class AdminController {
     public ResponseEntity<?> getMissions(){
         try {
             MissionsResponse response = missionService.getAllMissions();
+            return ResponseEntity.ok(response);
+        }catch (Exception exception){
+            return ResponseEntity.badRequest().body(new ErrorMessage(exception.getMessage()));
+        }
+    }
+
+    @GetMapping("hitman-backend/getCheckpoints")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getCheckpoints(){
+        try {
+            CheckpointListResponse response = checkpointService.getCheckpoints();
             return ResponseEntity.ok(response);
         }catch (Exception exception){
             return ResponseEntity.badRequest().body(new ErrorMessage(exception.getMessage()));

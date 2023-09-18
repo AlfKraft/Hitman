@@ -10,6 +10,9 @@ public class MissionResponse {
     private Long points;
     private Boolean forEliminated;
     private Long missionCompletionCount;
+    private String completionCount;
+
+    private String missionCode;
     private Boolean active;
 
     public MissionResponse(Long id, String missionName, String missionInfo, String startTime, String endTime, String location, Long points, Boolean forEliminated, Long missionCompletionCount, Boolean active) {
@@ -106,5 +109,21 @@ public class MissionResponse {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getCompletionCount() {
+        return completionCount;
+    }
+
+    public void setCompletionCount(String completionCount) {
+        this.completionCount = completionCount;
+    }
+
+    public String getMissionCode() {
+        return missionCode;
+    }
+
+    public void setMissionCode(String missionCode) {
+        this.missionCode = missionCode;
     }
 }

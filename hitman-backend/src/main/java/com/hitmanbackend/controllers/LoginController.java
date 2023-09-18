@@ -1,5 +1,7 @@
 package com.hitmanbackend.controllers;
 
+import com.hitmanbackend.entities.PlayerDataEntity;
+import com.hitmanbackend.repositories.PlayerRepository;
 import com.hitmanbackend.requests.LoginRequest;
 import com.hitmanbackend.responses.ErrorMessage;
 import com.hitmanbackend.responses.LoginResponse;
@@ -20,10 +22,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @RestController
 public class LoginController {
 
     Logger logger = LoggerFactory.getLogger(LoginController.class);
+
+    @Autowired
+    private PlayerRepository playerRepository;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -34,12 +41,19 @@ public class LoginController {
     @PostMapping("hitman-backend/login")
     public ResponseEntity<?> authenicateuser(@RequestBody LoginRequest request) throws Exception{
         try{
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-            final Account account = (Account) authentication.getPrincipal();
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwtToken = jwtTokenProvider.generateJwt(account.getUsername(), account.getAuthorities().iterator().next().getAuthority());
-            logger.info("%s had a successful login".formatted(account.getUsername()));
-            return ResponseEntity.ok(new LoginResponse(account.getUsername(),jwtToken,account.getAuthorities().iterator().next().getAuthority()));
+            Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(request.getUsername());
+            if(player.isEmpty()){
+                return ResponseEntity.badRequest().body(new ErrorMessage("Bad credentials"));
+            }
+            if (player.get().getApproved()) {
+                Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+                final Account account = (Account) authentication.getPrincipal();
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                String jwtToken = jwtTokenProvider.generateJwt(account.getUsername(), account.getAuthorities().iterator().next().getAuthority());
+                logger.info("%s had a successful login".formatted(account.getUsername()));
+                return ResponseEntity.ok(new LoginResponse(account.getUsername(), jwtToken, account.getAuthorities().iterator().next().getAuthority()));
+            }
+            return ResponseEntity.badRequest().body(new ErrorMessage("You are registered but your account hasn't been approved yet."));
         } catch (BadCredentialsException exception) {
             logger.error(exception.getMessage());
             return ResponseEntity.badRequest().body(new ErrorMessage(exception.getMessage()));

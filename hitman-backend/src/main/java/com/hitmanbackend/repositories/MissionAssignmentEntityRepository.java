@@ -10,4 +10,8 @@ import java.util.List;
 
 @Repository
 public interface MissionAssignmentEntityRepository extends JpaRepository<MissionAssignmentEntity, Long> {
+
+    long countByMissionIdAndCompleted(Long missionId, Boolean completed);
+
+    void deleteAllByMissionId(Long id);
 }

@@ -1,17 +1,12 @@
 package com.hitmanbackend.controllers;
 
 import com.hitmanbackend.dto.Leader;
+import com.hitmanbackend.requests.CheckpointCompletionRequest;
 import com.hitmanbackend.requests.CompleteMissionRequest;
 import com.hitmanbackend.requests.EliminationRequest;
-import com.hitmanbackend.responses.ErrorMessage;
-import com.hitmanbackend.responses.MessageResponse;
-import com.hitmanbackend.responses.MissionsResponse;
-import com.hitmanbackend.responses.PlayerCardData;
+import com.hitmanbackend.responses.*;
 import com.hitmanbackend.security.JwtTokenProvider;
-import com.hitmanbackend.service.HitmanService;
-import com.hitmanbackend.service.MissionService;
-import com.hitmanbackend.service.Target;
-import com.hitmanbackend.service.UserService;
+import com.hitmanbackend.service.*;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +24,9 @@ public class UserController {
     HitmanService hitmanService;
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private CheckpointService checkpointService;
     @Autowired
     private UserService userService;
     @Autowired
@@ -111,6 +109,31 @@ public class UserController {
             Claims claims = jwtTokenProvider.parseToken(token.substring(7));
             missionService.completeMission(claims.getSubject(), request.getMissionId(), request.getMissionCode());
             return ResponseEntity.ok(new MessageResponse("Nice work! Mission completed!"));
+        }
+        catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorMessage(e.getMessage()));
+        }
+    }
+
+    @GetMapping("hitman-backend/getMyCheckpoints")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> getMyCheckpoints(@RequestHeader("Authorization") String token){
+        try {
+            Claims claims = jwtTokenProvider.parseToken(token.substring(7));
+            CheckpointListResponse missions = checkpointService.getMyCheckpoints(claims.getSubject());
+            return ResponseEntity.ok(missions);
+        }
+        catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorMessage(e.getMessage()));
+        }
+    }
+    @PostMapping("hitman-backend/completeCheckpoint")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> completeCheckpoint(@RequestHeader("Authorization") String token, @RequestBody CheckpointCompletionRequest request){
+        try {
+            Claims claims = jwtTokenProvider.parseToken(token.substring(7));
+            checkpointService.completeCheckpoint(claims.getSubject(), request);
+            return ResponseEntity.ok(new MessageResponse("Nice work! Checkpoint completed!"));
         }
         catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorMessage(e.getMessage()));

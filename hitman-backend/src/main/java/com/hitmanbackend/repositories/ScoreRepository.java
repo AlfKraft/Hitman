@@ -13,4 +13,6 @@ public interface ScoreRepository extends JpaRepository<ScoreEntity, Long> {
 
     Optional<ScoreEntity> findByPlayerId(Long id);
     List<ScoreEntity> findTop5ByOrderByScoreDesc();
+
+    List<ScoreEntity> findAllByOrderByScoreDesc();
 }

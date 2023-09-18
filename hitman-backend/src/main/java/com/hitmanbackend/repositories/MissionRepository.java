@@ -12,4 +12,10 @@ public interface MissionRepository extends JpaRepository<MissionEntity, Long> {
 
     Optional<MissionEntity> findByMissionName(String name);
     List<MissionEntity> findAllByForEliminated(Boolean forEliminated);
+    Optional<MissionEntity> findFirstByOrderByIdDesc();
+
+    List<MissionEntity> findAllByMissionNameContains(String name);
+
+    Boolean existsByMissionName(String name);
+
 }

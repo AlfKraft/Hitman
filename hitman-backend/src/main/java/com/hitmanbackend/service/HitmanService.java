@@ -1,22 +1,20 @@
 package com.hitmanbackend.service;
 
 import com.hitmanbackend.controllers.UserController;
-import com.hitmanbackend.entities.EliminationEntity;
-import com.hitmanbackend.entities.PlayerDataEntity;
-import com.hitmanbackend.entities.ScoreEntity;
-import com.hitmanbackend.entities.TestAccountEntity;
-import com.hitmanbackend.repositories.EliminationRepository;
-import com.hitmanbackend.repositories.PlayerRepository;
-import com.hitmanbackend.repositories.ScoreRepository;
-import com.hitmanbackend.repositories.TestAccountRepository;
+import com.hitmanbackend.entities.*;
+import com.hitmanbackend.repositories.*;
 import com.hitmanbackend.responses.PlayerCardData;
 import lombok.RequiredArgsConstructor;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -34,17 +32,27 @@ public class HitmanService {
 
     @Autowired
     ScoreRepository scoreRepository;
+    @Autowired
+    MissionRepository missionRepository;
+    @Autowired
+    MissionAssignmentEntityRepository missionAssignmentEntityRepository;
 
     Logger logger = LoggerFactory.getLogger(HitmanService.class);
 
+    SimpleDateFormat startFormat = new SimpleDateFormat("yyyy-MM-dd'T'01:00");
+    SimpleDateFormat endFormat = new SimpleDateFormat("yyyy-MM-dd'T'23:59");
 
     public void createANewGameCycle(){
         eliminationRepository.deleteAll();
 
-        List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndEliminatedFalse("USER");
+        List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndEliminatedFalseAndApprovedTrue("USER");
         if (players.isEmpty() || players.size() < 3){
             return;
         }
+        Instant nowUtc = Instant.now();
+        DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
+        DateTime nowEstonia = nowUtc.toDateTime(estonia);
+        Date now = nowEstonia.plusHours(3).toDate();
         List<String> eliminationCodes = new ArrayList<>();
         List<EliminationEntity> eliminationCodeEntities = new ArrayList<>();
 
@@ -90,11 +98,74 @@ public class HitmanService {
         }
 
         eliminationRepository.saveAll(eliminationCodeEntities);
+
+        // Clear all previous bounty missions
+
+        List<MissionEntity> missionsForDeletion = missionRepository.findAllByMissionNameContains("Bounty");
+        for (MissionEntity missionForDeletion:
+             missionsForDeletion) {
+            missionAssignmentEntityRepository.deleteAllByMissionId(missionForDeletion.getId());
+            missionRepository.delete(missionForDeletion);
+        }
+
+        // Create Top Player Bounty mission
+        List<ScoreEntity> top10Scores = scoreRepository.findAllByOrderByScoreDesc();
+        List<PlayerDataEntity> topPlayers = new ArrayList<>();
+        List<Long> topPlayersIds = new ArrayList<>();
+        int top5 = 0;
+        for (ScoreEntity score:
+             top10Scores) {
+            if(top5 > 4){
+                break;
+            }
+            if (!score.getPlayer().getEliminated()){
+                top5++;
+                topPlayers.add(score.getPlayer());
+                topPlayersIds.add(score.getPlayer().getId());
+            }
+        }
+
+        int topCount = 1;
+        for (PlayerDataEntity topPlayer:
+             topPlayers) {
+            MissionEntity missionEntity = new MissionEntity();
+            missionEntity.setForEliminated(true);
+            missionEntity.setMissionName("Bounty on top %d".formatted(topCount));
+            missionEntity.setMissionInfo("Find %s. If you are the first to eliminate this target. You will get back in to the game."
+                    .formatted(topPlayer.getFirstName() + " " + topPlayer.getLastName()));
+            missionEntity.setLocation("Tartu");
+            missionEntity.setMissionCompletionCount(1L);
+            String startTime = startFormat.format(now);
+            String endTime = endFormat.format(now);
+            missionEntity.setStartTime(startTime);
+            missionEntity.setEndTime(endTime);
+            missionEntity.setPoints(0L);
+            Optional<EliminationEntity> eliminationData = eliminationRepository.findByTargetId(topPlayer.getId());
+            eliminationData.ifPresent(eliminationEntity -> missionEntity.setMissionCode(eliminationEntity.getEliminationCode()));
+            missionRepository.save(missionEntity);
+            Optional<MissionEntity> justCreatedMission = missionRepository.findFirstByOrderByIdDesc();
+            players = playerRepository.findByRoleEqualsAndApprovedTrue("USER");
+            for (PlayerDataEntity playerToAssignMission:
+                    players) {
+                if (!topPlayersIds.contains(playerToAssignMission.getId())){
+                    missionAssignmentEntityRepository.save(new MissionAssignmentEntity(justCreatedMission.get(), playerToAssignMission,
+                            false));
+                }
+
+            }
+            topCount++;
+
+        }
+
     }
 
     public Target getPlayerTarget(String username) throws Exception {
         Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         if (player.isPresent()){
+            if (!player.get().getApproved()){
+                throw new Exception("Player not approved.");
+            }
+
             Optional<EliminationEntity> eliminationInfo = eliminationRepository.findByPlayerId(player.get().getId());
             if (eliminationInfo.isPresent()){
                 return new Target("%s %s".formatted(eliminationInfo.get().getTarget().getFirstName(), eliminationInfo.get().getTarget().getLastName()),
@@ -113,6 +184,9 @@ public class HitmanService {
     public Target eliminateTarget(String username, String eliminationCode) throws Exception {
         Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         if(player.isPresent()) {
+            if (!player.get().getApproved()){
+                throw new Exception("Player not approved.");
+            }
             Optional<EliminationEntity> eliminationEntity = eliminationRepository.findByPlayerId(player.get().getId());
             if (eliminationEntity.isPresent()) {
                 if (eliminationEntity.get().getEliminationCode().equals(eliminationCode)) {
@@ -176,6 +250,9 @@ public class HitmanService {
         PlayerCardData playerCardData = new PlayerCardData();
         Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         if(player.isPresent()){
+            if (!player.get().getApproved()){
+                throw new Exception("Player not approved.");
+            }
             Optional<EliminationEntity> eliminationData = eliminationRepository.findByTargetId(player.get().getId());
             Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
             if (eliminationData.isPresent() && score.isPresent()){
@@ -190,7 +267,6 @@ public class HitmanService {
             }
         }
         throw new Exception("Couldn't retrieve player's data.");
-
 
     }
 

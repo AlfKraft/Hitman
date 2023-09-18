@@ -86,6 +86,7 @@ import {ref, onMounted} from 'vue'
 import AccountInfo from '@/components/AccountInfo'
 import Loading from "@/components/Loading";
 import {missionStore} from "@/stores/mission.store";
+import {checkpointStore} from "@/stores/checkpoint.store";
 import {storeToRefs} from "pinia/dist/pinia";
 const name = ref('')
 const eliminationCode = ref('')
@@ -94,12 +95,15 @@ const errorMessage = ref(null)
 const eliminated = ref(false)
 const store = userStore()
 const missionsStore = missionStore()
+const checkpoints = checkpointStore()
 const leaderBoardData = ref([])
 const loading = ref(false)
 const {completedMissions} = storeToRefs(missionStore())
 
 onMounted( async ()=>{
   loading.value = true
+  await checkpoints.getMyCheckpoints().catch(error =>
+  {checkpoints.loading = false});
   await store.getMyStats().then(response => {
     name.value = response.data.name
     eliminationCode.value = response.data.eliminationCode

@@ -45,53 +45,67 @@ public class RegistrationService {
 
     Logger logger = LoggerFactory.getLogger(RegistrationService.class);
 
+    SimpleDateFormat regOpenFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
     SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public void registerAccount(AccountDataDTO accountDto) throws Exception {
+        Instant nowUtc = Instant.now();
 
+        DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
+        DateTime nowEstonia = nowUtc.toDateTime(estonia);
+        Date now = nowEstonia.plusHours(3).toDate();
+        Date openRegistration = regOpenFormat.parse("2023-09-18T11:59");
+        Date closeRegistration = regOpenFormat.parse("2023-09-24T20:00");
+        if(now.before(openRegistration)){
+            throw new Exception("Registration is not open yet.");
+        }
+        if(now.after(closeRegistration)){
+            throw new Exception("Registration is closed.");
+        }
 
         if (accountDto.getProfileImage().isEmpty() || accountDto.getProfileImage() == null){
-            throw new Exception("Profile image missing from the request.");
+            throw new Exception("Profile image is missing from the request.");
         }
         if (accountDto.getUsername() == null || accountDto.getUsername().isBlank()){
-            throw new Exception("Username missing from the request.");
+            throw new Exception("Username is missing from the request.");
         }
         if (accountDto.getPassword() == null || accountDto.getPassword().isBlank()){
-            throw new Exception("Password missing from the request.");
+            throw new Exception("Password is missing from the request.");
         }
         if (accountDto.getFirstName() == null || accountDto.getFirstName().isBlank()){
-            throw new Exception("First name missing from the request.");
+            throw new Exception("First name is missing from the request.");
         }
         if (accountDto.getLastName() == null || accountDto.getLastName().isBlank()){
-            throw new Exception("last name missing from the request.");
+            throw new Exception("Last name is missing from the request.");
         }
         if (accountDto.getBirthdate() == null || accountDto.getBirthdate().isBlank()){
-            throw new Exception("Birthdate missing from the request.");
+            throw new Exception("Birthdate is missing from the request.");
         }
         if (accountDto.getEmail() == null || accountDto.getEmail().isBlank()){
-            throw new Exception("Email missing from the request.");
+            throw new Exception("Email is missing from the request.");
         }
         if (accountDto.getHobbies() == null || accountDto.getHobbies().isBlank()){
-            throw new Exception("Hobbies missing from the request.");
+            throw new Exception("Hobbies are missing from the request.");
         }
         if (accountDto.getFacebook() == null || accountDto.getFacebook().isBlank()){
-            throw new Exception("Social media missing from the request.");
+            throw new Exception("Social media  link is missing from the request.");
         }
         if (accountDto.getMostVisitedPlaces() == null || accountDto.getMostVisitedPlaces().isBlank()){
-            throw new Exception("Favorite places missing from the request.");
+            throw new Exception("Favorite places are missing from the request.");
         }
         if (accountDto.getPhoneNumber() == null || accountDto.getPhoneNumber().isBlank()){
-            throw new Exception("Phone number name missing from the request.");
+            throw new Exception("Phone number is missing from the request.");
         }
         if (accountDto.getProfileImage() == null){
-            throw new Exception("Image missing from the request.");
+            throw new Exception("Image missing is from the request.");
         }
         if (accountDto.getSchoolAndSpeciality() == null || accountDto.getSchoolAndSpeciality().isBlank()){
-            throw new Exception("School and specialty missing from the request.");
+            throw new Exception("School and specialty are missing from the request.");
         }
         if (accountDto.getWorkPlace() == null || accountDto.getWorkPlace().isBlank()){
-            throw new Exception("Phone number name missing from the request.");
+            throw new Exception("Work place is missing from the request.");
         }
+
 
         if (credentialsRepository.existsByUsernameIgnoreCase(accountDto.getUsername())) {
             logger.error(accountDto.getUsername()+ ": Username is already taken!");
@@ -109,12 +123,11 @@ public class RegistrationService {
             logger.error(accountDto.getUsername()+ ": Passwords don't match!");
             throw new Exception("Passwords don't match!");
         }
-
-        if(playerRepository.existsByFirstNameAndLastName(accountDto.getFirstName(), accountDto.getLastName())){
-            throw new Exception("You have already registered.");
-        }
         if(playerRepository.existsByEmail(accountDto.getEmail())){
-            throw new Exception("Account has already been registered with this email.");
+            throw new Exception("User with this email has already been created");
+        }
+        if (playerRepository.existsByPhoneNumberContaining(accountDto.getPhoneNumber())){
+            throw new Exception("User with this phone number has already been created");
         }
 
         if (accountDto.getProfileImage().getSize() > 5 * 1024 * 1024){
@@ -122,10 +135,6 @@ public class RegistrationService {
             throw new Exception("File size is too big: %d MB. File size must be under 5MB.".formatted(fileSize));
         }
 
-        Instant nowUtc = Instant.now();
-        DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
-        DateTime nowEstonia = nowUtc.toDateTime(estonia);
-        Date now = nowEstonia.plusHours(3).minusYears(18).toDate();
         Date birthdate = inputFormat.parse(accountDto.getBirthdate());
         if (!birthdate.before(now)){
             throw new Exception("You must be 18 or older to participate in this game.");
@@ -149,6 +158,7 @@ public class RegistrationService {
         newPlayer.setUsername(accountDto.getUsername());
         newPlayer.setEliminated(false);
         newPlayer.setRole("USER");
+        newPlayer.setApproved(false);
 
         logger.info(accountDto.getUsername()+ ": Saving image!");
 
@@ -181,7 +191,7 @@ public class RegistrationService {
 
         for (String ext:
              allowedExtensions) {
-            if (fileName.endsWith(ext)){
+            if (fileName.toLowerCase().endsWith(ext)){
                 return true;
             }
 

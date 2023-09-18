@@ -21,6 +21,11 @@ import Loading from "@/components/Loading";
 const store = missionStore()
 const {missions, loading} = storeToRefs(missionStore())
 
+onMounted(async ()=>{
+  loading.value = true
+  await store.getMyMissions()
+})
+
 </script>
 
 <style scoped>

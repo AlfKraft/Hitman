@@ -5,13 +5,14 @@ import com.hitmanbackend.dto.User;
 import com.hitmanbackend.entities.*;
 import com.hitmanbackend.repositories.*;
 import com.hitmanbackend.requests.PlayerIdRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
+@Transactional
 @Service
 public class UserService {
 
@@ -36,7 +37,8 @@ public class UserService {
             if(entity.getScoreEntity() != null){
                 points = entity.getScoreEntity().getScore();
             }
-            players.add(new User(entity.getId(), entity.getUsername(),"%s %s".formatted(entity.getFirstName(), entity.getLastName()), points, entity.getEliminated()));
+            players.add(new User(entity.getId(), entity.getUsername(),"%s %s".formatted(entity.getFirstName()
+                    , entity.getLastName()), points, entity.getEliminated(), entity.getEmail(), entity.getPhoneNumber()));
         }
 
         return players;

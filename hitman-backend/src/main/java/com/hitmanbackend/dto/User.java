@@ -12,12 +12,18 @@ public class User {
 
     private Boolean eliminated;
 
-    public User(Long id, String username, String name, Long points, Boolean eliminated) {
+    private String email;
+
+    private String phoneNumber;
+
+    public User(Long id, String username, String name, Long points, Boolean eliminated, String email, String phoneNumber) {
         this.id = id;
         this.username = username;
         this.name = name;
-        this.eliminated = eliminated;
         this.points = points;
+        this.eliminated = eliminated;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
     }
 
     public User() {
@@ -62,5 +68,21 @@ public class User {
 
     public void setPoints(Long points) {
         this.points = points;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

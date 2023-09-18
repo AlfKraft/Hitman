@@ -1,15 +1,14 @@
 <template>
-  <v-card>
-    <v-img
+  <v-card v-if="!loading">
+    <v-img v-if="!errorMessage"
       :src="target.image"
       height="400px"
       cover
     ></v-img>
     <v-card-title>TARGET</v-card-title>
     <v-card-title v-if="!errorMessage"> Name: {{ target.name }}</v-card-title>
-    <v-card-subtitle v-if="!errorMessage"> Social media: {{target.facebook}} </v-card-subtitle>
-    <v-row></v-row>
-    <v-card-subtitle v-if="!errorMessage"> School/Speciality:</v-card-subtitle>
+    <v-card-text v-if="!errorMessage"> Social media: {{target.facebook}} </v-card-text>
+    <v-card-text v-if="!errorMessage"> School/Speciality:</v-card-text>
     <v-card-text v-if="!errorMessage">
       {{target.schoolAndSpeciality}}
     </v-card-text>
@@ -33,11 +32,15 @@
       </v-row>
     </v-card-actions>
   </v-card>
+  <v-card class="mainComponent">
+    <Loading v-if="loading"></Loading>
+  </v-card>
 </template>
 
 <script setup>
 import {onMounted, reactive, ref} from 'vue'
 import {userStore} from "@/stores";
+import Loading from "@/components/Loading";
 const store = userStore();
 const loading = ref(false)
 const errorMessage = ref(null)
@@ -59,7 +62,7 @@ const eliminatePlayerData = reactive({
 
 
 onMounted(async ()=>{
-
+  loading.value = true;
   await store.getTarget().then(response => {
     target.value.name = response.data.name;
     target.value.facebook = response.data.facebook
@@ -70,7 +73,11 @@ onMounted(async ()=>{
     target.value.image = response.data.image
   }).catch(error => {
     errorMessage.value = error.response.data.message
+    if(!errorMessage.value){
+      errorMessage.value = "Couldn't find target's data."
+    }
   })
+  loading.value = false;
 })
 
 
