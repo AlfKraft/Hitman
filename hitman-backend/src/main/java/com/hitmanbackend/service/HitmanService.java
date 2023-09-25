@@ -1,8 +1,9 @@
 package com.hitmanbackend.service;
 
-import com.hitmanbackend.controllers.UserController;
 import com.hitmanbackend.entities.*;
 import com.hitmanbackend.repositories.*;
+import com.hitmanbackend.responses.EliminationDataResponse;
+import com.hitmanbackend.responses.GameResponse;
 import com.hitmanbackend.responses.PlayerCardData;
 import lombok.RequiredArgsConstructor;
 import org.joda.time.DateTime;
@@ -42,20 +43,58 @@ public class HitmanService {
     SimpleDateFormat startFormat = new SimpleDateFormat("yyyy-MM-dd'T'01:00");
     SimpleDateFormat endFormat = new SimpleDateFormat("yyyy-MM-dd'T'23:59");
 
-    public void createANewGameCycle(){
+    SimpleDateFormat compareDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+
+    public GameResponse createANewGameCycle() throws Exception {
+
+        logger.info("Started creating new game cycle.");
+        Date now = getCurrentTime();
         eliminationRepository.deleteAll();
+        logger.info("Successfully deleted previous data.");
 
         List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndEliminatedFalseAndApprovedTrue("USER");
-        if (players.isEmpty() || players.size() < 3){
-            return;
+
+        if (players.isEmpty()){
+            throw new Exception("No active players found");
         }
-        Instant nowUtc = Instant.now();
-        DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
-        DateTime nowEstonia = nowUtc.toDateTime(estonia);
-        Date now = nowEstonia.plusHours(3).toDate();
+
+        logger.info("Found all active players.");
+        // Check who has completed checkpoints
+        logger.info("Check who has completed checkpoints.");
+        List<PlayerDataEntity> playersEliminatedByCheckpointNonCompletion = new ArrayList<>();
+        for (PlayerDataEntity player:
+             players) {
+
+            Set<CheckpointCompletionEntity> playerCheckpoints = player.getCheckpoints();
+            for (CheckpointCompletionEntity checkpoint:
+                 playerCheckpoints) {
+                if (checkpoint.getCompleted()){
+                    continue;
+                }
+                Date endTime = compareDateFormat.parse(checkpoint.getCheckpoint().getEndTime());
+
+                if (now.after(endTime)){
+                    player.setEliminated(true);
+                    playerRepository.save(player);
+                    playersEliminatedByCheckpointNonCompletion.add(player);
+                    logger.info("%s has been eliminated by not completing checkpoint: %s".formatted(player.getUsername(), checkpoint.getCheckpoint().getCheckpointName()));
+                    break;
+                }
+
+            }
+        }
+        logger.info("Eliminate players who haven't completed checkpoints.");
+        for (PlayerDataEntity eliminatedplayer:
+             playersEliminatedByCheckpointNonCompletion) {
+            players.remove(eliminatedplayer);
+
+        }
+
+        if (players.size() < 2){
+            throw new Exception("Only one player left in the game");
+        }
         List<String> eliminationCodes = new ArrayList<>();
         List<EliminationEntity> eliminationCodeEntities = new ArrayList<>();
-
 
         Random random = new Random();
         Stack<Long> targetCodes = new Stack<>();
@@ -98,6 +137,18 @@ public class HitmanService {
         }
 
         eliminationRepository.saveAll(eliminationCodeEntities);
+        logger.info("Game cycle created successfully.");
+        GameResponse gameResponse = new GameResponse();
+        for (EliminationEntity playerGameData:
+             eliminationCodeEntities) {
+
+            EliminationDataResponse eliminationDataResponse = new EliminationDataResponse("%s %s".formatted(
+                    playerGameData.getPlayer().getFirstName(), playerGameData.getPlayer().getLastName()), playerGameData.getEliminationCode(),"%s %s".formatted(
+                            playerGameData.getTarget().getFirstName(), playerGameData.getTarget().getLastName()));
+            gameResponse.getGameData().add(eliminationDataResponse);
+        }
+
+
 
         // Clear all previous bounty missions
 
@@ -108,17 +159,18 @@ public class HitmanService {
             missionRepository.delete(missionForDeletion);
         }
 
+
         // Create Top Player Bounty mission
-        List<ScoreEntity> top10Scores = scoreRepository.findAllByOrderByScoreDesc();
+        List<ScoreEntity> topScores = scoreRepository.findAllByOrderByScoreDesc();
         List<PlayerDataEntity> topPlayers = new ArrayList<>();
         List<Long> topPlayersIds = new ArrayList<>();
         int top5 = 0;
         for (ScoreEntity score:
-             top10Scores) {
+             topScores) {
             if(top5 > 4){
                 break;
             }
-            if (!score.getPlayer().getEliminated()){
+            if (!score.getPlayer().getEliminated() && score.getPlayer().getApproved() && score.getScore() > 0){
                 top5++;
                 topPlayers.add(score.getPlayer());
                 topPlayersIds.add(score.getPlayer().getId());
@@ -157,6 +209,8 @@ public class HitmanService {
 
         }
 
+        return gameResponse;
+
     }
 
     public Target getPlayerTarget(String username) throws Exception {
@@ -190,6 +244,14 @@ public class HitmanService {
             Optional<EliminationEntity> eliminationEntity = eliminationRepository.findByPlayerId(player.get().getId());
             if (eliminationEntity.isPresent()) {
                 if (eliminationEntity.get().getEliminationCode().equals(eliminationCode)) {
+
+                    // Check if player was in top bounty missions
+                    Optional<MissionEntity> bountyMission = missionRepository.findByMissionCodeEquals(eliminationCode);
+                    if (bountyMission.isPresent()){
+                        missionAssignmentEntityRepository.deleteAllByMissionId(bountyMission.get().getId());
+                        missionRepository.delete(bountyMission.get());
+                    }
+
                     Optional<EliminationEntity> nextEliminationData = eliminationRepository.findByPlayerId(eliminationEntity
                             .get().getTarget().getId());
                     if (nextEliminationData.isPresent()) {
@@ -208,6 +270,8 @@ public class HitmanService {
                         eliminationEntity.get().setTarget(nextEliminationData.get().getTarget());
                         eliminationRepository.save(eliminationEntity.get());
                         eliminationRepository.delete(nextEliminationData.get());
+                        logger.info("%s eliminated his/her target %s".formatted(player.get().getFirstName() + " " +
+                                player.get().getLastName(), eliminationEntity.get().getTarget().getFirstName()+ " "+ eliminationEntity.get().getTarget().getLastName()));
                         return new Target("%s %s".formatted(eliminationEntity.get().getTarget().getFirstName(), eliminationEntity.get().getTarget().getLastName()),
                                 eliminationEntity.get().getTarget().getFacebook(),
                                 eliminationEntity.get().getTarget().getSchoolAndSpeciality(),
@@ -260,14 +324,104 @@ public class HitmanService {
                 playerCardData.setEliminationCode(eliminationData.get().getEliminationCode());
                 playerCardData.setScore(score.get().getScore());
                 playerCardData.setEliminated(player.get().getEliminated());
+                playerCardData.setRank(getPlayerRank(player.get().getId()));
+                playerCardData.setAliveAgents(getAliveAgents());
                 return playerCardData;
             }
             if (score.isPresent()){
-                return new PlayerCardData("%s %s".formatted(player.get().getFirstName(), player.get().getLastName()), "", score.get().getScore(), player.get().getEliminated());
+                return new PlayerCardData("%s %s".formatted(player.get().getFirstName(), player.get().getLastName()), ""
+                        , score.get().getScore(), player.get().getEliminated(), getPlayerRank(player.get().getId()), getAliveAgents());
             }
         }
         throw new Exception("Couldn't retrieve player's data.");
 
     }
 
+    private String getPlayerRank(Long id){
+        List<ScoreEntity> playerLeaderBoard = scoreRepository.findAllByOrderByScoreDesc();
+        int rank = 1;
+        for (ScoreEntity score:
+             playerLeaderBoard) {
+            if (score.getPlayer().getId().equals(id)){
+                StringBuilder rankToString = new StringBuilder();
+                rankToString.append(rank);
+                if (rankToString.toString().endsWith("11")){
+                    rankToString.append("th");
+                }
+                if (rankToString.toString().endsWith("12")){
+                    rankToString.append("th");
+                }
+                else if (rankToString.toString().endsWith("13")){
+                    rankToString.append("th");
+                }
+                else if(rankToString.toString().endsWith("3")){
+                    rankToString.append("rd");
+                }
+                else if(rankToString.toString().endsWith("2")){
+                    rankToString.append("nd");
+                }
+                else if(rankToString.toString().endsWith("1")){
+                    rankToString.append("st");
+                }
+                else {
+                    rankToString.append("th");
+                }
+                rankToString.append("/");
+                long totalPlayers = playerRepository.countByApprovedTrueAndRoleEquals("USER");
+                rankToString.append(totalPlayers);
+                return rankToString.toString();
+            }
+            if(score.getPlayer().getApproved()){
+                rank++;
+            }
+
+        }
+        return "";
+    }
+    private Long getAliveAgents(){
+        return playerRepository.countByApprovedTrueAndEliminatedFalseAndRoleEquals("USER");
+    }
+
+    private void eliminatePlayer(PlayerDataEntity player) {
+        //Find players elimination data
+        // player -> code -> target
+        Optional<EliminationEntity> nextEliminationData = eliminationRepository.findByPlayerId(player.getId());
+        // agent -> code - player
+        Optional<EliminationEntity> backwardsData = eliminationRepository.findByTargetId(player.getId());
+
+        if (nextEliminationData.isPresent() && backwardsData.isPresent()) {
+            player.setEliminated(true);
+            playerRepository.save(player);
+            backwardsData.get().setEliminationCode(nextEliminationData.get().getEliminationCode());
+            backwardsData.get().setTarget(nextEliminationData.get().getTarget());
+            eliminationRepository.delete(nextEliminationData.get());
+            eliminationRepository.save(backwardsData.get());
+        }
+        else {
+            logger.error("Target %s doesn't have a next target assigned.".formatted(nextEliminationData.get()
+                    .getPlayer().getUsername()));
+        }
+    }
+
+    private Date getCurrentTime(){
+        Instant nowUtc = Instant.now();
+        DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
+        DateTime nowEstonia = nowUtc.toDateTime(estonia);
+        return nowEstonia.plusHours(3).toDate();
+    }
+
+    public GameResponse getGameData() {
+
+        List<EliminationEntity> gamedataEnt = eliminationRepository.findAll();
+        GameResponse gameResponse = new GameResponse();
+        for (EliminationEntity ent:
+             gamedataEnt) {
+            gameResponse.getGameData().add(new EliminationDataResponse("%s %s".formatted(
+                    ent.getPlayer().getFirstName(), ent.getPlayer().getLastName()), ent.getEliminationCode(),"%s %s".formatted(
+                    ent.getTarget().getFirstName(), ent.getTarget().getLastName())));
+
+        }
+        return gameResponse;
+
+    }
 }

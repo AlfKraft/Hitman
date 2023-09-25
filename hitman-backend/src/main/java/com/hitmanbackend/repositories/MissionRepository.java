@@ -16,6 +16,8 @@ public interface MissionRepository extends JpaRepository<MissionEntity, Long> {
 
     List<MissionEntity> findAllByMissionNameContains(String name);
 
+    Optional<MissionEntity> findByMissionCodeEquals(String code);
+
     Boolean existsByMissionName(String name);
 
 }

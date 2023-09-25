@@ -8,7 +8,7 @@
           </v-row>
           <v-row class="justify-center">
             <v-card-actions>
-              <v-btn @click="languageSwitch = !languageSwitch">English</v-btn>
+              <v-btn class="bg-red-darken-4" @click="languageSwitch = !languageSwitch">English</v-btn>
             </v-card-actions>
           </v-row>
           <v-card-text>
@@ -35,7 +35,7 @@
           </v-row>
           <v-row class="justify-center">
             <v-card-actions>
-              <v-btn @click="languageSwitch = !languageSwitch">Estonian</v-btn>
+              <v-btn class="bg-red-darken-4" @click="languageSwitch = !languageSwitch">Estonian</v-btn>
             </v-card-actions>
           </v-row>
           <v-card-text>

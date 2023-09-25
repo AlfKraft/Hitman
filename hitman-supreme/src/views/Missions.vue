@@ -2,7 +2,7 @@
   <v-container>
     <v-row dense class="d-flex justify-center align-center">
       <v-card v-if="missions.length === 0 && !loading">
-        <v-card-title>You don't have any active missions</v-card-title>
+        <v-card-title class="text-wrap">You don't have any active missions</v-card-title>
       </v-card>
       <v-col class="d-flex justify-center align-center" v-for="mission in missions" :key="mission.id">
         <Mission class="mainComponent" :id="mission.id" :name="mission.missionName" :details="mission.missionInfo" :start-time="mission.startTime"

@@ -30,9 +30,6 @@ export const missionStore = defineStore({
       )
     },
 
-    shufflePlayers(){
-      return axios.get('/codes')
-    },
     completeMission(missionCompletionData){
       return axios.post('/completeMission', missionCompletionData)
     },

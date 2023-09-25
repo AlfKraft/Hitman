@@ -42,30 +42,35 @@ public class CheckpointService {
     @Autowired
     EliminationRepository eliminationRepository;
 
-    SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+    SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    SimpleDateFormat databaseFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+    SimpleDateFormat startFormat = new SimpleDateFormat("yyyy-MM-dd'T'01:00");
+    SimpleDateFormat endFormat = new SimpleDateFormat("yyyy-MM-dd'T'23:59");
     SimpleDateFormat outputFormat = new SimpleDateFormat("dd. MMMM yyyy '@' k:mm");
     Logger logger = LoggerFactory.getLogger(CheckpointService.class);
 
     public void createNewCheckpoint(CheckpointCreationRequest request) throws Exception {
         Instant nowUtc = Instant.now();
         DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
-        DateTime nowEstonia = nowUtc.toDateTime(estonia);
+        DateTime nowEstonia = nowUtc.toDateTime(estonia); 
         Date now = nowEstonia.plusHours(3).toDate();
-        Date startTime = inputFormat.parse(request.getStartDateTime());
-        Date endTime = inputFormat.parse(request.getEndDateTime());
-        if (startTime.before(now) || startTime.after(endTime) || endTime.before(now)){
-            throw new Exception("Can't create checkpoint with these dates. Start: %s, End: %s".formatted(
-                    outputFormat.format(startTime), outputFormat.format(endTime)
+        Date checkpointDate = inputFormat.parse(request.getCheckpointDate());
+        if (checkpointDate.before(now)){
+            throw new Exception("Can't create checkpoint with this date. %s".formatted(
+                    outputFormat.format(checkpointDate)
             ));
         }
-        if (checkpointRepository.existsByCheckpointName(request.getCheckpointName())){
+        if (checkpointRepository.existsByCheckpointNameIgnoreCase(request.getCheckpointName())){
             throw new Exception("Duplicate checkpoint creation!");
         }
 
         String checkpointCode = randomCode.randomAlphanumericString(9);
+        String start = startFormat.format(checkpointDate);
+        String end = endFormat.format(checkpointDate);
 
         checkpointRepository.save(new CheckpointEntity(request.getCheckpointName(), request.getCheckpointLocation(),
-                request.getStartDateTime(), request.getEndDateTime(), checkpointCode));
+                start, end, checkpointCode));
 
         List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndApprovedTrue("USER");
         Optional<CheckpointEntity> checkpoint = checkpointRepository.findByCheckpointCode(checkpointCode);
@@ -86,8 +91,8 @@ public class CheckpointService {
 
         for (CheckpointEntity entity:
              checkpointEntityList) {
-            Date startTime = inputFormat.parse(entity.getStartTime());
-            Date endTime = inputFormat.parse(entity.getEndTime());
+            Date startTime = databaseFormat.parse(entity.getStartTime());
+            Date endTime = databaseFormat.parse(entity.getEndTime());
             CheckpointResponse checkpointResponse = new CheckpointResponse(entity.getId(), entity.getCheckpointName(),
                     entity.getLocation(), outputFormat.format(startTime), outputFormat.format(endTime), entity.getCheckpointCode());
             checkpointListResponse.getCheckpoints().add(checkpointResponse);
@@ -115,18 +120,9 @@ public class CheckpointService {
                 for (CheckpointCompletionEntity checkpointCompletedEnt:
                      playersCheckpoints) {
                     CheckpointEntity checkpointData = checkpointCompletedEnt.getCheckpoint();
-                    Date startTime = inputFormat.parse(checkpointData.getStartTime());
-                    Date endTime = inputFormat.parse(checkpointData.getEndTime());
-                    if (now.after(endTime) && !checkpointCompletedEnt.getCompleted()){
-
-                        eliminatePlayer(player.get());
-                        logger.info("%s has been eliminated. Didn't complete checkpoint: '%s'".formatted(player.get()
-                                .getUsername(), checkpointData.getCheckpointName()));
-                        logger.info(checkpointData.toString());
-                        throw new Exception("You have been eliminated! You haven't completed '%s' checkpoint by this time: %s".formatted(
-                                checkpointData.getCheckpointName(), outputFormat.format(endTime)));
-                    }
-                    else if (now.before(endTime) && now.after(startTime) && !checkpointCompletedEnt.getCompleted()){
+                    Date startTime = databaseFormat.parse(checkpointData.getStartTime());
+                    Date endTime = databaseFormat.parse(checkpointData.getEndTime());
+                    if (now.before(endTime) && now.after(startTime) && !checkpointCompletedEnt.getCompleted()){
                         UserCheckpoint checkpointResponse = new UserCheckpoint(checkpointData.getId(),
                                 checkpointData.getCheckpointName(), checkpointData.getLocation(), outputFormat.format(startTime),
                                 outputFormat.format(endTime), true);
@@ -142,46 +138,14 @@ public class CheckpointService {
                 }
                 return notCompletedCheckpointList;
 
-
-
             }
-            else {
-                Set<CheckpointCompletionEntity> playersCheckpoints = player.get().getCheckpoints();
-                for (CheckpointCompletionEntity checkpointCompletedEnt:
-                        playersCheckpoints) {
-                    CheckpointEntity checkpointData = checkpointCompletedEnt.getCheckpoint();
-                    Date endTime = inputFormat.parse(checkpointData.getEndTime());
-                    if (now.after(endTime)){
-                        checkpointCompletedEnt.setCompleted(true);
-                        checkpointCompletionRepository.save(checkpointCompletedEnt);
-                    }
-                }
-                return new CheckpointListResponse();
-            }
+            return new CheckpointListResponse();
+
         }
         throw new Exception("Player doesn't exist: %s".formatted(username));
     }
 
-    private void eliminatePlayer(PlayerDataEntity player) {
-        //Find players elimination data
-        // player -> code -> target
-        Optional<EliminationEntity> nextEliminationData = eliminationRepository.findByPlayerId(player.getId());
-        // agent -> code - player
-        Optional<EliminationEntity> backwardsData = eliminationRepository.findByTargetId(player.getId());
 
-        if (nextEliminationData.isPresent() && backwardsData.isPresent()) {
-            player.setEliminated(true);
-            playerRepository.save(player);
-            backwardsData.get().setEliminationCode(nextEliminationData.get().getEliminationCode());
-            backwardsData.get().setTarget(nextEliminationData.get().getTarget());
-            eliminationRepository.delete(nextEliminationData.get());
-            eliminationRepository.save(backwardsData.get());
-        }
-        else {
-            logger.error("Target %s doesn't have a next target assigned.".formatted(nextEliminationData.get()
-                    .getPlayer().getUsername()));
-        }
-    }
 
 
     public void completeCheckpoint(String subject, CheckpointCompletionRequest request) throws Exception {
@@ -212,4 +176,20 @@ public class CheckpointService {
         throw new Exception("Couldn't find player data");
 
     }
+
+
+    public void completePastCheckpointsWhenRevivingPlayer(PlayerDataEntity player, Date now) throws ParseException {
+        Set<CheckpointCompletionEntity> playersCheckpoints = player.getCheckpoints();
+        for (CheckpointCompletionEntity checkpointCompletedEnt:
+                playersCheckpoints) {
+            CheckpointEntity checkpointData = checkpointCompletedEnt.getCheckpoint();
+            Date endTime = databaseFormat.parse(checkpointData.getEndTime());
+            if (now.after(endTime)){
+                checkpointCompletedEnt.setCompleted(true);
+                checkpointCompletionRepository.save(checkpointCompletedEnt);
+            }
+        }
+    }
+
+
 }

@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface EliminationRepository extends JpaRepository<EliminationEntity, Long> {
     Optional<EliminationEntity> findByPlayerId(Long playerId);
     Optional<EliminationEntity> findByTargetId(Long playerId);
+
+    Optional<EliminationEntity> findByEliminationCode(String code);
 }

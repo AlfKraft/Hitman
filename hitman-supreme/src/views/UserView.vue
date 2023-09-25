@@ -1,10 +1,7 @@
 <template>
   <v-row class="d-flex justify-center align-center ma-3">
     <v-col class="d-flex justify-center align-center">
-      <AccountInfo v-if="!loading" class="mainComponent" :name=name :elimination-code=eliminationCode :score=score :eliminated="eliminated"/>
-      <v-card v-else>
-      <Loading/>
-      </v-card>
+      <AccountInfo class="mainComponent" :name="name" :elimination-code="eliminationCode" :score="score" :rank="rank" :eliminated="eliminated" :loading="loading"/>
     </v-col>
     <v-col class="d-flex justify-center align-center">
       <v-card>
@@ -42,6 +39,7 @@
         </tr>
         </tbody>
       </v-table>
+        <v-card-title v-if="!loading && agentsAlive" class="text-center text-red">AGENTS ALIVE: {{agentsAlive}}</v-card-title>
       </v-card>
     </v-col>
     <v-col class="d-flex justify-center align-center">
@@ -93,6 +91,8 @@ const eliminationCode = ref('')
 const score = ref('')
 const errorMessage = ref(null)
 const eliminated = ref(false)
+const agentsAlive = ref(null)
+const rank = ref(null)
 const store = userStore()
 const missionsStore = missionStore()
 const checkpoints = checkpointStore()
@@ -109,6 +109,8 @@ onMounted( async ()=>{
     eliminationCode.value = response.data.eliminationCode
     score.value = response.data.score
     eliminated.value = response.data.eliminated
+    agentsAlive.value = response.data.aliveAgents
+    rank.value = response.data.rank
   }).catch(error => {
     errorMessage.value = error.response.data.message
   })

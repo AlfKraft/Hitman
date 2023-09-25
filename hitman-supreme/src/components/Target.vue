@@ -1,5 +1,5 @@
 <template>
-  <v-card v-if="!loading">
+  <v-card class="mainComponent" v-if="!loading">
     <v-img v-if="!errorMessage"
       :src="target.image"
       height="400px"

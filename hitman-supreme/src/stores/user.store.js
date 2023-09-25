@@ -25,6 +25,9 @@ export const userStore = defineStore({
     },
     leaderboard(){
       return axios.get('/leaderBoard')
+    },
+    getPlayerData(playerId){
+      return axios.post('/getPlayerData', playerId)
     }
 
   }

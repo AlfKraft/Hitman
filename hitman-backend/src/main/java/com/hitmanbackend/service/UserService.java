@@ -5,11 +5,18 @@ import com.hitmanbackend.dto.User;
 import com.hitmanbackend.entities.*;
 import com.hitmanbackend.repositories.*;
 import com.hitmanbackend.requests.PlayerIdRequest;
+import com.hitmanbackend.responses.PlayerCardDataForAdmin;
 import jakarta.transaction.Transactional;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 @Transactional
@@ -25,6 +32,14 @@ public class UserService {
     @Autowired
     EliminationRepository eliminationRepository;
 
+    @Autowired
+    CheckpointService checkpointService;
+
+    @Autowired
+    UploadObject uploadObject;
+
+    SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+    SimpleDateFormat outputFormat = new SimpleDateFormat("dd. MMMM yyyy");
 
     public List<User> getAllPlayers() {
 
@@ -73,12 +88,20 @@ public class UserService {
     }
 
     public void revivePlayer(PlayerIdRequest request) throws Exception {
+        Instant nowUtc = Instant.now();
+        DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
+        DateTime nowEstonia = nowUtc.toDateTime(estonia);
+        Date now = nowEstonia.plusHours(3).toDate();
         Optional<PlayerDataEntity> player = playerRepository.findById(request.getId());
         if (player.isPresent()){
             if (!player.get().getEliminated()){
                 throw new Exception("Player is alive.");
             }
             player.get().setEliminated(false);
+
+            //Checkpoint check
+            checkpointService.completePastCheckpointsWhenRevivingPlayer(player.get(), now);
+
             playerRepository.save(player.get());
             return;
         }
@@ -98,5 +121,34 @@ public class UserService {
             }
         }
         return leaders;
+    }
+
+    public PlayerCardDataForAdmin getPlayerData(PlayerIdRequest request) throws Exception {
+        Optional<PlayerDataEntity> player = playerRepository.findById(request.getId());
+
+        if(player.isPresent()){
+            String name = player.get().getFirstName() + " " + player.get().getLastName();
+            Date birthdate = inputFormat.parse(player.get().getBirthdate());
+            String birthDateFormatted = outputFormat.format(birthdate);
+            return new PlayerCardDataForAdmin(name,player.get().getProfileImage(),player.get().getEmail(),
+                    birthDateFormatted, player.get().getFacebook(), player.get().getSchoolAndSpeciality(),
+                    player.get().getWorkPlace(), player.get().getHobbies(), player.get().getFavoritePlaces(),
+                    player.get().getPhoneNumber(), player.get().getApproved(), player.get().getEliminated());
+        }
+        throw new Exception("Couldn't find player's data.");
+
+
+
+    }
+
+    public void generateNewURLsForPlayersImages(){
+        List<PlayerDataEntity> users = playerRepository.findAllByRoleEquals("USER");
+        for (PlayerDataEntity player:
+             users) {
+            String newURL = uploadObject.generateNewUrlForPlayer(player.getFirstName(), player.getLastName());
+            player.setProfileImage(newURL);
+        }
+        playerRepository.saveAll(users);
+
     }
 }

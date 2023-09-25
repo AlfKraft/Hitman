@@ -5,14 +5,12 @@ public class CheckpointCreationRequest {
 
     private String checkpointName;
     private String checkpointLocation;
-    private String startDateTime;
-    private String endDateTime;
+    private String checkpointDate;
 
-    public CheckpointCreationRequest(String checkpointName, String checkpointLocation, String startDateTime, String endDateTime) {
+    public CheckpointCreationRequest(String checkpointName, String checkpointLocation, String checkpointDate) {
         this.checkpointName = checkpointName;
         this.checkpointLocation = checkpointLocation;
-        this.startDateTime = startDateTime;
-        this.endDateTime = endDateTime;
+        this.checkpointDate = checkpointDate;
     }
 
     public String getCheckpointName() {
@@ -31,19 +29,11 @@ public class CheckpointCreationRequest {
         this.checkpointLocation = checkpointLocation;
     }
 
-    public String getStartDateTime() {
-        return startDateTime;
+    public String getCheckpointDate() {
+        return checkpointDate;
     }
 
-    public void setStartDateTime(String startDateTime) {
-        this.startDateTime = startDateTime;
-    }
-
-    public String getEndDateTime() {
-        return endDateTime;
-    }
-
-    public void setEndDateTime(String endDateTime) {
-        this.endDateTime = endDateTime;
+    public void setCheckpointDate(String checkpointDate) {
+        this.checkpointDate = checkpointDate;
     }
 }

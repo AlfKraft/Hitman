@@ -1,11 +1,11 @@
 <template>
   <v-card class="ma-2">
     <v-card-title class="text-red">CHECKPOINT</v-card-title>
-    <v-card-title>{{ props.name }}</v-card-title>
+    <v-card-title class="text-wrap">{{ props.name }}</v-card-title>
     <v-card-text class="text-red">If not completed, then you will be eliminated!</v-card-text>
     <v-card-subtitle class="mb-3">Start: {{props.startTime}}</v-card-subtitle>
     <v-card-subtitle class="mb-3">End: {{props.endTime}}</v-card-subtitle>
-    <v-card-text>Location: {{props.location}}</v-card-text>
+    <v-card-text class="text-wrap">Location: {{props.location}}</v-card-text>
     <v-alert v-if="message">{{message}}</v-alert>
     <v-card-actions v-if="props.available && !loading">
       <v-text-field v-model="checkpointCompletionData.checkpointCode" class="flex-fill ma-2"

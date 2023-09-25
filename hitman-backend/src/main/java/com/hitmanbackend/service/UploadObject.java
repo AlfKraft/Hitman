@@ -37,4 +37,24 @@ public class UploadObject {
         }
 
     }
+
+    public String generateNewUrlForPlayer(String firstName, String lastName){
+        String bucketName = "player_img_bucket";
+
+        // The ID of your GCS object
+        String objectName = "%s_%s_profile".formatted(firstName, lastName).toLowerCase();
+
+        // The path to your file to upload
+        // String filePath = "path/to/your/file"
+
+        Storage storage = StorageOptions.newBuilder().setProjectId("radiant-precept-396617").build().getService();
+        BlobId blobId = BlobId.of(bucketName, objectName);
+        Blob blob = storage.get(blobId);
+        if (blob == null){
+            return "";
+        }
+        URL signedUrl = blob.signUrl(7, TimeUnit.DAYS, Storage.SignUrlOption.withV4Signature());
+        return String.valueOf(signedUrl);
+
+    }
 }

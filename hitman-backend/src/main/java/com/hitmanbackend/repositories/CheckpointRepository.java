@@ -10,5 +10,5 @@ import java.util.Optional;
 @Repository
 public interface CheckpointRepository extends JpaRepository<CheckpointEntity, Long> {
         Optional<CheckpointEntity> findByCheckpointCode(String code);
-        Boolean existsByCheckpointName(String name);
+        Boolean existsByCheckpointNameIgnoreCase(String name);
 }

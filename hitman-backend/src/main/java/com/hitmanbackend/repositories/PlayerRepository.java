@@ -23,4 +23,8 @@ public interface PlayerRepository extends JpaRepository<PlayerDataEntity, Long> 
     List<PlayerDataEntity> findAllByRoleEquals(String role);
 
     List<PlayerDataEntity> findByEliminated(Boolean eliminated);
+
+    long countByApprovedTrueAndEliminatedFalseAndRoleEquals(String role);
+
+    long countByApprovedTrueAndRoleEquals(String role);
 }

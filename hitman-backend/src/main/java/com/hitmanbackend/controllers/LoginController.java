@@ -9,6 +9,9 @@ import com.hitmanbackend.responses.MessageResponse;
 import com.hitmanbackend.security.JwtTokenProvider;
 import com.hitmanbackend.service.Account;
 import io.jsonwebtoken.Claims;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Optional;
 
 @RestController
@@ -54,7 +59,7 @@ public class LoginController {
                 return ResponseEntity.ok(new LoginResponse(account.getUsername(), jwtToken, account.getAuthorities().iterator().next().getAuthority()));
             }
             return ResponseEntity.badRequest().body(new ErrorMessage("You are registered but your account hasn't been approved yet."));
-        } catch (BadCredentialsException exception) {
+        } catch (Exception exception) {
             logger.error(exception.getMessage());
             return ResponseEntity.badRequest().body(new ErrorMessage(exception.getMessage()));
         }
@@ -66,5 +71,29 @@ public class LoginController {
         Claims claims = jwtTokenProvider.parseToken(token.substring(7));
         String refreshToken = jwtTokenProvider.generateJwt(claims.getSubject(), claims.get("role").toString());
         return ResponseEntity.ok(new LoginResponse(claims.getSubject(),refreshToken,claims.get("role").toString()));
+    }
+
+    private void actionsAllowed() throws Exception {
+        SimpleDateFormat notAllowedStartFormat = new SimpleDateFormat("HH:ss");
+        Date now = getCurrentTime();
+        String notAllowedStartString = "00:01";
+        String notAllowedEndString = "00:59";
+        String currentTime = notAllowedStartFormat.format(now);
+        now = notAllowedStartFormat.parse(currentTime);
+        Date notAllowedStart = notAllowedStartFormat.parse(notAllowedStartString);
+        Date notAllowedEnd = notAllowedStartFormat.parse(notAllowedEndString);
+
+        if (now.after(notAllowedStart) && now.before(notAllowedEnd)){
+            throw new Exception("Action not allowed during time out.");
+        }
+
+
+    }
+
+    private Date getCurrentTime(){
+        Instant nowUtc = Instant.now();
+        DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
+        DateTime nowEstonia = nowUtc.toDateTime(estonia);
+        return nowEstonia.plusHours(3).toDate();
     }
 }

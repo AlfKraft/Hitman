@@ -5,16 +5,19 @@ public class PlayerCardData {
     private String name;
 
     private String eliminationCode;
-
     private Long score;
 
+    private String rank;
+    private Long aliveAgents;
     private Boolean isEliminated;
 
-    public PlayerCardData(String name, String eliminationCode, Long score, Boolean isEliminated) {
+    public PlayerCardData(String name, String eliminationCode, Long score, Boolean isEliminated, String rank, Long aliveAgents) {
         this.name = name;
         this.eliminationCode = eliminationCode;
         this.score = score;
         this.isEliminated = isEliminated;
+        this.rank = rank;
+        this.aliveAgents = aliveAgents;
     }
 
     public PlayerCardData() {
@@ -50,5 +53,21 @@ public class PlayerCardData {
 
     public void setEliminated(Boolean isEliminated) {
         this.isEliminated = isEliminated;
+    }
+
+    public String getRank() {
+        return rank;
+    }
+
+    public void setRank(String rank) {
+        this.rank = rank;
+    }
+
+    public Long getAliveAgents() {
+        return aliveAgents;
+    }
+
+    public void setAliveAgents(Long aliveAgents) {
+        this.aliveAgents = aliveAgents;
     }
 }

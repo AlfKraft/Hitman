@@ -33,6 +33,11 @@ public class MissionService {
     PlayerRepository playerRepository;
     @Autowired
     RandomCode missionCode;
+    @Autowired
+    EliminationRepository eliminationRepository;
+
+    @Autowired
+    CheckpointService checkpointService;
     SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
     SimpleDateFormat outputFormat = new SimpleDateFormat("dd. MMMM yyyy '@' k:mm");
 
@@ -181,49 +186,71 @@ public class MissionService {
         DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
         DateTime nowEstonia = nowUtc.toDateTime(estonia);
         Date now = nowEstonia.plusHours(3).toDate();
+
         if (player.isPresent()){
             if (!player.get().getApproved()){
                 throw new Exception("Player not approved.");
             }
-            for (MissionAssignmentEntity missionAssignment:
-                 player.get().getMissions()) {
-                if (Objects.equals(missionAssignment.getMission().getId(), missionId)){
-                    Date startTime = inputFormat.parse(missionAssignment.getMission().getStartTime());
-                    Date endTime = inputFormat.parse(missionAssignment.getMission().getEndTime());
+            Optional<MissionAssignmentEntity> missionAssignment = missionAssignmentEntityRepository.findByMissionIdAndPlayerId(missionId, player.get().getId());
+            if (missionAssignment.isPresent() && !missionAssignment.get().getCompleted()) {
+                Date startTime = inputFormat.parse(missionAssignment.get().getMission().getStartTime());
+                Date endTime = inputFormat.parse(missionAssignment.get().getMission().getEndTime());
 
-                    if (missionAssignment.getMission().getMissionCompletionCount() > 0){
-                        long missionCompletedCount = missionAssignmentEntityRepository.countByMissionIdAndCompleted(missionId, true);
-                        if (missionAssignment.getMission().getMissionCompletionCount() <= missionCompletedCount){
-                            throw new Exception("Mission can't be completed. Count limit reached.");
-                        }
+                if (missionAssignment.get().getMission().getMissionCompletionCount() > 0) {
+                    long missionCompletedCount = missionAssignmentEntityRepository.countByMissionIdAndCompleted(missionId, true);
+                    if (missionAssignment.get().getMission().getMissionCompletionCount() <= missionCompletedCount) {
+                        throw new Exception("Mission can't be completed. Count limit reached.");
                     }
-                    if (now.after(startTime) && now.before(endTime)) {
-                        if (missionAssignment.getMission().getMissionCode().equals(missionCode)) {
-                            if(missionAssignment.getMission().getForEliminated() && player.get().getEliminated()){
-                                player.get().setEliminated(false);
-                                playerRepository.save(player.get());
-                            }
-                            else {
-                                Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
-                                if (score.isPresent()) {
-                                    score.get().setScore(score.get().getScore() + missionAssignment.getMission().getPoints());
-                                    scoreRepository.save(score.get());
-                                } else {
-                                    scoreRepository.save(new ScoreEntity(player.get(), missionAssignment.getMission().getPoints()));
+                }
+                if (now.after(startTime) && now.before(endTime)) {
+                    if (missionAssignment.get().getMission().getMissionCode().equals(missionCode)) {
+                        if (missionAssignment.get().getMission().getForEliminated() && player.get().getEliminated()) {
+                            // If is bounty mission. Revive player and take points of top player
+                            if (missionAssignment.get().getMission().getMissionName().contains("Bounty")){
+                                Optional<EliminationEntity> gameData = eliminationRepository.findByEliminationCode(missionCode);
+                                if (gameData.isPresent()){
+                                    PlayerDataEntity topPlayer = gameData.get().getTarget();
+                                    ScoreEntity topPlayerScore = topPlayer.getScoreEntity();
+                                    if (topPlayerScore.getScore() >= 150){
+                                        topPlayerScore.setScore(topPlayerScore.getScore() - 150);
+                                        scoreRepository.save(topPlayerScore);
+                                    }
+                                    else {
+                                        topPlayerScore.setScore(0L);
+                                        scoreRepository.save(topPlayerScore);
+                                    }
                                 }
                             }
-                            missionAssignment.setCompleted(true);
-                            missionAssignmentEntityRepository.save(missionAssignment);
-                            break;
+                            player.get().setEliminated(false);
+                            playerRepository.save(player.get());
+                            checkpointService.completePastCheckpointsWhenRevivingPlayer(player.get(), now);
+                        } else {
+                            Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
+                            if (score.isPresent()) {
+                                score.get().setScore(score.get().getScore() + missionAssignment.get().getMission().getPoints());
+                                scoreRepository.save(score.get());
+                            } else {
+                                scoreRepository.save(new ScoreEntity(player.get(), missionAssignment.get().getMission().getPoints()));
+                            }
                         }
+                        missionAssignment.get().setCompleted(true);
+                        missionAssignmentEntityRepository.save(missionAssignment.get());
+                    }
+                    else {
                         throw new Exception("Wrong mission code.");
                     }
+                }
+                else {
                     throw new Exception("Mission can't be completed at this time.");
                 }
-
+                }
+            throw new Exception("You can't complete this mission");
             }
+
+
+
         }
 
     }
 
-}
+
