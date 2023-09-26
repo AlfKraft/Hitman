@@ -103,32 +103,52 @@ public class CheckpointService {
     }
 
     public CheckpointListResponse getMyCheckpoints(String username) throws Exception {
-
+        logger.info("%s : Get my checkpoints.".formatted(username));
         Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         Instant nowUtc = Instant.now();
         DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
         DateTime nowEstonia = nowUtc.toDateTime(estonia);
         Date now = nowEstonia.plusHours(3).toDate();
-
         if (player.isPresent()){
             if (!player.get().getApproved()){
+                logger.error("%s : Player not approved.".formatted(username));
                 throw new Exception("Player not approved.");
             }
             if (!player.get().getEliminated()){
+                logger.info("%s : Checkpoint logic: Player eliminated: false".formatted(username));
                 Set<CheckpointCompletionEntity> playersCheckpoints = player.get().getCheckpoints();
                 CheckpointListResponse notCompletedCheckpointList = new CheckpointListResponse();
+                logger.info("%s : Find all checkpoints".formatted(username));
                 for (CheckpointCompletionEntity checkpointCompletedEnt:
                      playersCheckpoints) {
                     CheckpointEntity checkpointData = checkpointCompletedEnt.getCheckpoint();
                     Date startTime = databaseFormat.parse(checkpointData.getStartTime());
                     Date endTime = databaseFormat.parse(checkpointData.getEndTime());
+                    logger.info("%s : Check checkpoint. Id : %d. Name: %s. End time: %s. Completed: %b".formatted(
+                            username,
+                            checkpointCompletedEnt.getCheckpoint().getId(),
+                            checkpointCompletedEnt.getCheckpoint().getCheckpointName(),
+                            checkpointCompletedEnt.getCheckpoint().getEndTime(),
+                            checkpointCompletedEnt.getCompleted()));
                     if (now.before(endTime) && now.after(startTime) && !checkpointCompletedEnt.getCompleted()){
+                        logger.info("%s : Show player the checkpoint. Id : %d. Name: %s. End time: %s. Completed: %b".formatted(
+                                username,
+                                checkpointCompletedEnt.getCheckpoint().getId(),
+                                checkpointCompletedEnt.getCheckpoint().getCheckpointName(),
+                                checkpointCompletedEnt.getCheckpoint().getEndTime(),
+                                checkpointCompletedEnt.getCompleted()));
                         UserCheckpoint checkpointResponse = new UserCheckpoint(checkpointData.getId(),
                                 checkpointData.getCheckpointName(), checkpointData.getLocation(), outputFormat.format(startTime),
                                 outputFormat.format(endTime), true);
                         notCompletedCheckpointList.getUserCheckpoints().add(checkpointResponse);
                     }
                     else if(now.before(startTime) && !checkpointCompletedEnt.getCompleted()){
+                        logger.info("%s : Show player partly hidden checkpoint. Id : %d. Name: %s. End time: %s. Completed: %b".formatted(
+                                username,
+                                checkpointCompletedEnt.getCheckpoint().getId(),
+                                checkpointCompletedEnt.getCheckpoint().getCheckpointName(),
+                                checkpointCompletedEnt.getCheckpoint().getEndTime(),
+                                checkpointCompletedEnt.getCompleted()));
                         UserCheckpoint checkpointResponse = new UserCheckpoint(checkpointData.getId(),
                                 checkpointData.getCheckpointName(), "Unknown", outputFormat.format(startTime),
                                 outputFormat.format(endTime), false);
@@ -139,6 +159,7 @@ public class CheckpointService {
                 return notCompletedCheckpointList;
 
             }
+            logger.info("%s : Checkpoint logic: Player eliminated: true");
             return new CheckpointListResponse();
 
         }
