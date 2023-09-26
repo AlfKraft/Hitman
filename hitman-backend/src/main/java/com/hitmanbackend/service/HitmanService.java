@@ -236,42 +236,65 @@ public class HitmanService {
     }
 
     public Target eliminateTarget(String username, String eliminationCode) throws Exception {
+        logger.info("%s : Started target elimination logic.".formatted(username));
         Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(username);
         if(player.isPresent()) {
             if (!player.get().getApproved()){
-                throw new Exception("Player not approved.");
+                logger.error("%s : Player is not approved.".formatted(username));
+                throw new Exception("Player is not approved.");
             }
             Optional<EliminationEntity> eliminationEntity = eliminationRepository.findByPlayerId(player.get().getId());
             if (eliminationEntity.isPresent()) {
+                logger.info("%s : Player is in the game cycle.".formatted(username));
+                logger.info("%s : Entered elimination code : %s".formatted(username, eliminationCode));
                 if (eliminationEntity.get().getEliminationCode().equals(eliminationCode)) {
+                    logger.info("%s : Code match! Entered code: %s = %s : Game cycle code".formatted(username, eliminationCode,
+                            eliminationEntity.get().getEliminationCode()));
 
                     // Check if player was in top bounty missions
                     Optional<MissionEntity> bountyMission = missionRepository.findByMissionCodeEquals(eliminationCode);
                     if (bountyMission.isPresent()){
+                        logger.info("%s : Target '%s' has bounty on him/her".formatted(username,
+                                eliminationEntity.get().getTarget().getFirstName() + " " +
+                                eliminationEntity.get().getTarget().getLastName()));
+                        logger.info("%s : Delete '%s' bounty".formatted(username, eliminationEntity.get().getTarget().getFirstName() + " " +
+                                eliminationEntity.get().getTarget().getLastName()));
                         missionAssignmentEntityRepository.deleteAllByMissionId(bountyMission.get().getId());
                         missionRepository.delete(bountyMission.get());
+                        logger.info("%s : Delete '%s' bounty completed".formatted(username, eliminationEntity.get().getTarget().getFirstName() + " " +
+                                eliminationEntity.get().getTarget().getLastName()));
                     }
-
+                    logger.info("%s : Get next target data.".formatted(username));
                     Optional<EliminationEntity> nextEliminationData = eliminationRepository.findByPlayerId(eliminationEntity
                             .get().getTarget().getId());
                     if (nextEliminationData.isPresent()) {
+                        logger.info("%s : Next target data : %s %s - code : %s".formatted(username,
+                                nextEliminationData.get().getTarget().getFirstName(),
+                                nextEliminationData.get().getTarget().getLastName(),
+                                nextEliminationData.get().getEliminationCode()));
                         Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
                         if(score.isPresent()){
+                            logger.info("%s : Add elimination score.".formatted(username));
                             score.get().setScore(score.get().getScore() + 100);
+                            logger.info("%s : New score: %d".formatted(username, score.get().getScore()));
                             scoreRepository.save(score.get());
+                            logger.info("%s : Score saved.".formatted(username));
                         }
                         else {
+                            logger.info("%s : New score: %d".formatted(username, 100L));
                             scoreRepository.save(new ScoreEntity(player.get(), 100L));
+                            logger.info("%s : Score saved.".formatted(username));
                         }
                         PlayerDataEntity eliminated = eliminationEntity.get().getTarget();
                         eliminated.setEliminated(true);
                         playerRepository.save(eliminated);
+                        logger.info("%s : %s eliminated his/her target %s with code : %s".formatted(username,player.get().getFirstName() + " " +
+                                player.get().getLastName(), eliminated.getFirstName()+ " "+ eliminated.getLastName(),
+                                eliminationCode));
                         eliminationEntity.get().setEliminationCode(nextEliminationData.get().getEliminationCode());
                         eliminationEntity.get().setTarget(nextEliminationData.get().getTarget());
                         eliminationRepository.save(eliminationEntity.get());
                         eliminationRepository.delete(nextEliminationData.get());
-                        logger.info("%s eliminated his/her target %s".formatted(player.get().getFirstName() + " " +
-                                player.get().getLastName(), eliminationEntity.get().getTarget().getFirstName()+ " "+ eliminationEntity.get().getTarget().getLastName()));
                         return new Target("%s %s".formatted(eliminationEntity.get().getTarget().getFirstName(), eliminationEntity.get().getTarget().getLastName()),
                                 eliminationEntity.get().getTarget().getFacebook(),
                                 eliminationEntity.get().getTarget().getSchoolAndSpeciality(),
@@ -281,20 +304,19 @@ public class HitmanService {
                                 ,eliminationEntity.get().getTarget().getProfileImage());
                     }
                     else {
-                        logger.error("Target %s doesn't have a next target assigned.".formatted(nextEliminationData.get().getPlayer().getUsername()));
+                        logger.error("%s : Target %s doesn't have a next target assigned.".formatted(username, nextEliminationData.get().getPlayer().getUsername()));
                     }
-
                 }
                 else {
-                    logger.error("Elimination codes didn't match: Input: %s and Database: %s".formatted(eliminationCode, eliminationEntity.get().getEliminationCode()));
+                    logger.error("%s : Elimination codes didn't match: Input: %s and Database: %s".formatted(username,eliminationCode, eliminationEntity.get().getEliminationCode()));
                 }
             }
             else {
-                logger.error("Couldn't find %s's data in active game database".formatted(username));
+                logger.error("%s : Couldn't find %s's data in active game database".formatted(username, username));
             }
         }
         else {
-            logger.error("%s was not found in the database".formatted(username));
+            logger.error("%s : User not found in the database".formatted(username));
         }
 
         throw new Exception("Elimination failed!");
@@ -348,7 +370,7 @@ public class HitmanService {
                 if (rankToString.toString().endsWith("11")){
                     rankToString.append("th");
                 }
-                if (rankToString.toString().endsWith("12")){
+                else if (rankToString.toString().endsWith("12")){
                     rankToString.append("th");
                 }
                 else if (rankToString.toString().endsWith("13")){

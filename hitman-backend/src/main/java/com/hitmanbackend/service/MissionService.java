@@ -186,33 +186,47 @@ public class MissionService {
         DateTimeZone estonia = DateTimeZone.forID("Europe/Tallinn");
         DateTime nowEstonia = nowUtc.toDateTime(estonia);
         Date now = nowEstonia.plusHours(3).toDate();
-
+        logger.info("%s : Start mission completion logic.".formatted(username));
+        logger.info("%s entered code: %s".formatted(username, missionCode));
         if (player.isPresent()){
             if (!player.get().getApproved()){
                 throw new Exception("Player not approved.");
             }
             Optional<MissionAssignmentEntity> missionAssignment = missionAssignmentEntityRepository.findByMissionIdAndPlayerId(missionId, player.get().getId());
+            logger.info("%s : Check if mission has been assigned to player. Mission id : %d".formatted(username, missionId));
             if (missionAssignment.isPresent() && !missionAssignment.get().getCompleted()) {
+                logger.info("%s : Start mission %d completion.".formatted(username, missionId));
                 Date startTime = inputFormat.parse(missionAssignment.get().getMission().getStartTime());
                 Date endTime = inputFormat.parse(missionAssignment.get().getMission().getEndTime());
 
                 if (missionAssignment.get().getMission().getMissionCompletionCount() > 0) {
+                    logger.info("Mission %d : has completion count : %d".formatted(missionId, missionAssignment.get().getMission().getMissionCompletionCount()));
                     long missionCompletedCount = missionAssignmentEntityRepository.countByMissionIdAndCompleted(missionId, true);
+                    logger.info("Mission is completed %d / %d times.".formatted(missionCompletedCount, missionAssignment.get().getMission().getMissionCompletionCount()));
                     if (missionAssignment.get().getMission().getMissionCompletionCount() <= missionCompletedCount) {
                         throw new Exception("Mission can't be completed. Count limit reached.");
                     }
                 }
                 if (now.after(startTime) && now.before(endTime)) {
+                    logger.info("%s : Mission is available to player. Mission id : %d".formatted(username, missionId));
+                    logger.info("%s : Try to complete mission with code %s. Mission id : %d".formatted(username, missionCode, missionId));
                     if (missionAssignment.get().getMission().getMissionCode().equals(missionCode)) {
+                        logger.info("%s : Code match! %s. Mission id : %d".formatted(username, missionCode, missionId));
                         if (missionAssignment.get().getMission().getForEliminated() && player.get().getEliminated()) {
                             // If is bounty mission. Revive player and take points of top player
+                            logger.info("%s : Revival mission. Mission id : %d".formatted(username, missionId));
                             if (missionAssignment.get().getMission().getMissionName().contains("Bounty")){
+                                logger.info("%s : Bounty mission. Mission id : %d".formatted(username, missionId));
                                 Optional<EliminationEntity> gameData = eliminationRepository.findByEliminationCode(missionCode);
                                 if (gameData.isPresent()){
                                     PlayerDataEntity topPlayer = gameData.get().getTarget();
                                     ScoreEntity topPlayerScore = topPlayer.getScoreEntity();
+                                    logger.info("%s : subtract 150 points from %s".formatted(username,
+                                            topPlayer.getFirstName() + " " + topPlayer.getLastName()));
                                     if (topPlayerScore.getScore() >= 150){
                                         topPlayerScore.setScore(topPlayerScore.getScore() - 150);
+                                        logger.info("%s : %s's score after subtraction: %d".formatted(username,
+                                                topPlayer.getFirstName() + " " + topPlayer.getLastName(), topPlayerScore.getScore()));
                                         scoreRepository.save(topPlayerScore);
                                     }
                                     else {
@@ -225,16 +239,23 @@ public class MissionService {
                             playerRepository.save(player.get());
                             checkpointService.completePastCheckpointsWhenRevivingPlayer(player.get(), now);
                         } else {
+                            logger.info("%s : Points mission. Mission id : %d. Points worth: %d".formatted(username,
+                                    missionId, missionAssignment.get().getMission().getPoints()));
                             Optional<ScoreEntity> score = scoreRepository.findByPlayerId(player.get().getId());
                             if (score.isPresent()) {
                                 score.get().setScore(score.get().getScore() + missionAssignment.get().getMission().getPoints());
+                                logger.info("%s : Mission id : %d. Player's new score: %d".formatted(username,
+                                        missionId, score.get().getScore()));
                                 scoreRepository.save(score.get());
                             } else {
+                                logger.info("%s : Mission id : %d. Player's new score: %d".formatted(username,
+                                        missionId, missionAssignment.get().getMission().getPoints()));
                                 scoreRepository.save(new ScoreEntity(player.get(), missionAssignment.get().getMission().getPoints()));
                             }
                         }
                         missionAssignment.get().setCompleted(true);
                         missionAssignmentEntityRepository.save(missionAssignment.get());
+                        logger.info("%s : Completed mission completion logic.".formatted(username));
                     }
                     else {
                         throw new Exception("Wrong mission code.");
@@ -244,7 +265,9 @@ public class MissionService {
                     throw new Exception("Mission can't be completed at this time.");
                 }
                 }
-            throw new Exception("You can't complete this mission");
+            else {
+                throw new Exception("You can't complete this mission");
+            }
             }
 
 

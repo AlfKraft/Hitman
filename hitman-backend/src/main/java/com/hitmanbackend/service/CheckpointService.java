@@ -179,14 +179,26 @@ public class CheckpointService {
 
 
     public void completePastCheckpointsWhenRevivingPlayer(PlayerDataEntity player, Date now) throws ParseException {
+        logger.info("%s : Start complete past checkpoints during revival logic.".formatted(player.getUsername()));
         Set<CheckpointCompletionEntity> playersCheckpoints = player.getCheckpoints();
         for (CheckpointCompletionEntity checkpointCompletedEnt:
                 playersCheckpoints) {
             CheckpointEntity checkpointData = checkpointCompletedEnt.getCheckpoint();
             Date endTime = databaseFormat.parse(checkpointData.getEndTime());
+            logger.info("%s : Check checkpoint. Id : %d. Name: %s. End time: %s. Completed: %b".formatted(player.getUsername(),
+                    checkpointCompletedEnt.getCheckpoint().getId(),
+                    checkpointCompletedEnt.getCheckpoint().getCheckpointName(),
+                    checkpointCompletedEnt.getCheckpoint().getEndTime(),
+                    checkpointCompletedEnt.getCompleted()));
             if (now.after(endTime)){
+                logger.info("%s : Complete checkpoint. Id : %d. Name: %s".formatted(player.getUsername(),
+                        checkpointCompletedEnt.getCheckpoint().getId(),
+                        checkpointCompletedEnt.getCheckpoint().getCheckpointName()));
                 checkpointCompletedEnt.setCompleted(true);
                 checkpointCompletionRepository.save(checkpointCompletedEnt);
+                logger.info("%s : Successful checkpoint completion. Id : %d. Name: %s".formatted(player.getUsername(),
+                        checkpointCompletedEnt.getCheckpoint().getId(),
+                        checkpointCompletedEnt.getCheckpoint().getCheckpointName()));
             }
         }
     }
