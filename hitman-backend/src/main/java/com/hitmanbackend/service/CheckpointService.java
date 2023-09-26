@@ -150,15 +150,19 @@ public class CheckpointService {
 
     public void completeCheckpoint(String subject, CheckpointCompletionRequest request) throws Exception {
 
+        logger.info("%s : Start checkpoint completion logic.".formatted(subject));
+        logger.info("%s : Code entered: %s".formatted(subject, request.getCheckpointCode()));
         Optional<PlayerDataEntity> player = playerRepository.findAccountByUsername(subject);
         if(player.isPresent()){
             if (!player.get().getApproved()){
+                logger.info("%s : Player not approved.".formatted(subject));
                 throw new Exception("Player not approved.");
             }
             if (request.getCheckpointCode() == null || request.getCheckpointId() == null || request.getCheckpointCode().isBlank()){
+                logger.info("%s : Checkpoint completion failed. Wrong data in the request.".formatted(subject));
                 throw new Exception("Checkpoint completion failed. Wrong data in the request.");
             }
-
+            logger.info("%s : Find checkpoint by id. Id : %d".formatted(subject, request.getCheckpointId()));
             for (CheckpointCompletionEntity checkpointCompEnt:
                  player.get().getCheckpoints()) {
 
@@ -167,13 +171,18 @@ public class CheckpointService {
                             , checkpointCompEnt.getCheckpoint().getCheckpointName()));
                     checkpointCompEnt.setCompleted(true);
                     checkpointCompletionRepository.save(checkpointCompEnt);
+                    logger.info("%s : Completed checkpoint completion logic: SUCCESS".formatted(subject));
                     return;
                 }
 
             }
-            throw new Exception("Checkpoint completion failed");
+            logger.info("%s : Completed checkpoint completion logic: FAIL".formatted(subject));
+            logger.error("%s : Checkpoint completion failed.".formatted(subject));
+            throw new Exception("Checkpoint completion failed.");
         }
-        throw new Exception("Couldn't find player data");
+        logger.info("%s : Completed checkpoint completion logic: FAIL".formatted(subject));
+        logger.error("%s : Couldn't find player data.".formatted(subject));
+        throw new Exception("Couldn't find player data.");
 
     }
 

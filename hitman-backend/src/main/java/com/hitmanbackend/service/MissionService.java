@@ -258,14 +258,20 @@ public class MissionService {
                         logger.info("%s : Completed mission completion logic.".formatted(username));
                     }
                     else {
+                        logger.info("%s : Wrong mission code.".formatted(username));
+                        logger.info("%s : Completed  mission completion logic: FAIL".formatted(username));
                         throw new Exception("Wrong mission code.");
                     }
                 }
                 else {
+                    logger.info("%s : Wrong time for mission completion.".formatted(username));
+                    logger.info("%s : Completed  mission completion logic: FAIL".formatted(username));
                     throw new Exception("Mission can't be completed at this time.");
                 }
                 }
             else {
+                logger.info("%s : Can't complete this mission".formatted(username));
+                logger.info("%s : Completed  mission completion logic: FAIL".formatted(username));
                 throw new Exception("You can't complete this mission");
             }
             }
