@@ -1,5 +1,4 @@
 package com.hitmanbackend.service;
-
 import com.hitmanbackend.entities.*;
 import com.hitmanbackend.repositories.CheckpointCompletionRepository;
 import com.hitmanbackend.repositories.CheckpointRepository;
@@ -18,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -159,7 +157,7 @@ public class CheckpointService {
                 return notCompletedCheckpointList;
 
             }
-            logger.info("%s : Checkpoint logic: Player eliminated: true");
+            logger.info("%s : Checkpoint logic: Player eliminated: true".formatted(username));
             return new CheckpointListResponse();
 
         }

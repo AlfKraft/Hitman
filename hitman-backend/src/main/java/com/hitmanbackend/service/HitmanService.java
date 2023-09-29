@@ -159,56 +159,6 @@ public class HitmanService {
             missionRepository.delete(missionForDeletion);
         }
 
-
-        // Create Top Player Bounty mission
-        List<ScoreEntity> topScores = scoreRepository.findAllByOrderByScoreDesc();
-        List<PlayerDataEntity> topPlayers = new ArrayList<>();
-        List<Long> topPlayersIds = new ArrayList<>();
-        int top5 = 0;
-        for (ScoreEntity score:
-             topScores) {
-            if(top5 > 4){
-                break;
-            }
-            if (!score.getPlayer().getEliminated() && score.getPlayer().getApproved() && score.getScore() > 0){
-                top5++;
-                topPlayers.add(score.getPlayer());
-                topPlayersIds.add(score.getPlayer().getId());
-            }
-        }
-
-        int topCount = 1;
-        for (PlayerDataEntity topPlayer:
-             topPlayers) {
-            MissionEntity missionEntity = new MissionEntity();
-            missionEntity.setForEliminated(true);
-            missionEntity.setMissionName("Bounty on top %d".formatted(topCount));
-            missionEntity.setMissionInfo("Find %s. If you are the first to eliminate this target. You will get back in to the game."
-                    .formatted(topPlayer.getFirstName() + " " + topPlayer.getLastName()));
-            missionEntity.setLocation("Tartu");
-            missionEntity.setMissionCompletionCount(1L);
-            String startTime = startFormat.format(now);
-            String endTime = endFormat.format(now);
-            missionEntity.setStartTime(startTime);
-            missionEntity.setEndTime(endTime);
-            missionEntity.setPoints(0L);
-            Optional<EliminationEntity> eliminationData = eliminationRepository.findByTargetId(topPlayer.getId());
-            eliminationData.ifPresent(eliminationEntity -> missionEntity.setMissionCode(eliminationEntity.getEliminationCode()));
-            missionRepository.save(missionEntity);
-            Optional<MissionEntity> justCreatedMission = missionRepository.findFirstByOrderByIdDesc();
-            players = playerRepository.findByRoleEqualsAndApprovedTrue("USER");
-            for (PlayerDataEntity playerToAssignMission:
-                    players) {
-                if (!topPlayersIds.contains(playerToAssignMission.getId())){
-                    missionAssignmentEntityRepository.save(new MissionAssignmentEntity(justCreatedMission.get(), playerToAssignMission,
-                            false));
-                }
-
-            }
-            topCount++;
-
-        }
-
         return gameResponse;
 
     }
@@ -445,5 +395,58 @@ public class HitmanService {
         }
         return gameResponse;
 
+    }
+
+    public void createTop5BountyMissions(){
+        Date now = getCurrentTime();
+
+        // Create Top Player Bounty mission
+        List<ScoreEntity> topScores = scoreRepository.findAllByOrderByScoreDesc();
+        List<PlayerDataEntity> topPlayers = new ArrayList<>();
+        List<Long> topPlayersIds = new ArrayList<>();
+        int top5 = 0;
+        for (ScoreEntity score:
+                topScores) {
+            if(top5 > 4){
+                break;
+            }
+            if (!score.getPlayer().getEliminated() && score.getPlayer().getApproved() && score.getScore() > 0){
+                top5++;
+                topPlayers.add(score.getPlayer());
+                topPlayersIds.add(score.getPlayer().getId());
+            }
+        }
+
+        int topCount = 1;
+        for (PlayerDataEntity topPlayer:
+                topPlayers) {
+            MissionEntity missionEntity = new MissionEntity();
+            missionEntity.setForEliminated(true);
+            missionEntity.setMissionName("Bounty on top %d".formatted(topCount));
+            missionEntity.setMissionInfo("Find %s. If you are the first to eliminate this target. You will get back in to the game."
+                    .formatted(topPlayer.getFirstName() + " " + topPlayer.getLastName()));
+            missionEntity.setLocation("Tartu");
+            missionEntity.setMissionCompletionCount(1L);
+            String startTime = startFormat.format(now);
+            String endTime = endFormat.format(now);
+            missionEntity.setStartTime(startTime);
+            missionEntity.setEndTime(endTime);
+            missionEntity.setPoints(0L);
+            Optional<EliminationEntity> eliminationData = eliminationRepository.findByTargetId(topPlayer.getId());
+            eliminationData.ifPresent(eliminationEntity -> missionEntity.setMissionCode(eliminationEntity.getEliminationCode()));
+            missionRepository.save(missionEntity);
+            Optional<MissionEntity> justCreatedMission = missionRepository.findFirstByOrderByIdDesc();
+            List<PlayerDataEntity> players = playerRepository.findByRoleEqualsAndApprovedTrue("USER");
+            for (PlayerDataEntity playerToAssignMission:
+                    players) {
+                if (!topPlayersIds.contains(playerToAssignMission.getId())){
+                    missionAssignmentEntityRepository.save(new MissionAssignmentEntity(justCreatedMission.get(), playerToAssignMission,
+                            false));
+                }
+
+            }
+            topCount++;
+
+        }
     }
 }
