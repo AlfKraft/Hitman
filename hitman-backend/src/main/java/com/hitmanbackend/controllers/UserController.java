@@ -87,6 +87,9 @@ public class UserController {
         Claims claims = jwtTokenProvider.parseToken(token.substring(7));
         String refreshToken = jwtTokenProvider.generateJwt(claims.getSubject(), claims.get("role").toString());
         try{
+            if(adminControlRepository.findById(1L).get().getEnabled()){
+                throw new Exception("Can't complete the action during time out");
+            }
             PlayerCardData playerCardData = hitmanService.getPlayerCardData(claims.getSubject());
             return ResponseEntity.ok(playerCardData);
         } catch (Exception e) {
@@ -97,6 +100,9 @@ public class UserController {
     @GetMapping("hitman-backend/leaderBoard")
     public ResponseEntity<?> getTopPlayers(){
         try {
+            if(adminControlRepository.findById(1L).get().getEnabled()){
+                throw new Exception("Can't complete the action during time out");
+            }
             List<Leader> leaderboard = userService.getTopPlayers();
             return ResponseEntity.ok(leaderboard);
         }
@@ -109,6 +115,9 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getMyMissions(@RequestHeader("Authorization") String token){
         try {
+            if(adminControlRepository.findById(1L).get().getEnabled()){
+                throw new Exception("Can't complete the action during time out");
+            }
             Claims claims = jwtTokenProvider.parseToken(token.substring(7));
             MissionsResponse missions = missionService.getMyMissions(claims.getSubject());
             return ResponseEntity.ok(missions);
@@ -138,7 +147,9 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getMyCheckpoints(@RequestHeader("Authorization") String token){
         try {
-
+            if(adminControlRepository.findById(1L).get().getEnabled()){
+                throw new Exception("Can't complete the action during time out");
+            }
             Claims claims = jwtTokenProvider.parseToken(token.substring(7));
             CheckpointListResponse missions = checkpointService.getMyCheckpoints(claims.getSubject());
             return ResponseEntity.ok(missions);
